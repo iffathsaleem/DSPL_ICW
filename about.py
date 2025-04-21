@@ -26,7 +26,6 @@ def show_about():
         """, unsafe_allow_html=True
     )
     
-    # Create a div for the background
     st.markdown('<div class="about-background"></div>', unsafe_allow_html=True)
 
     # Title and description for the About page 
@@ -52,7 +51,7 @@ def show_about():
     # Create an interactive map of Sri Lanka using folium
     sri_lanka_map = folium.Map(location=[7.8731, 80.7718], zoom_start=7)  # Coordinates for Sri Lanka
 
-    # Add a marker at the center of Sri Lanka
+    # Marker at the center of Sri Lanka
     folium.Marker([7.8731, 80.7718], popup="Sri Lanka").add_to(sri_lanka_map)
 
     st.markdown("### Interactive Map of Sri Lanka")
