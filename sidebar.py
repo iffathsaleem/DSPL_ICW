@@ -1,3 +1,5 @@
+#Sidebar
+
 def sidebar_filters(df):
     st.sidebar.title("Health Data Filters")
 
