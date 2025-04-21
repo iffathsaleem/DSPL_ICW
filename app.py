@@ -11,15 +11,14 @@ health.columns = health.columns.str.strip()
 health["Year"] = health["Year"].astype(int)
 
 # Sidebar logic
-view, category, selected_indicators, year_range, sort_order = sidebar_filters(df)
+view, category, selected_indicators, year_range, sort_order = sidebar_filters(health)
 
 # About Section
 if view == "About":
     show_about()
-
 # Indicator Charts
 elif selected_indicators:
-    filtered = df[df["Indicator Name"].isin(selected_indicators)]
+    filtered = health[health["Indicator Name"].isin(selected_indicators)]
     filtered = filtered[(filtered["Year"] >= year_range[0]) & (filtered["Year"] <= year_range[1])]
     filtered = filtered.sort_values(by="Year", ascending=(sort_order == "Oldest to Newest"))
 

@@ -1,5 +1,7 @@
 #Sidebar
 
+import streamlit as st
+
 def sidebar_filters(df):
     st.sidebar.title("Health Data Filters")
 
