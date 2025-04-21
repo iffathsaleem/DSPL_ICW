@@ -14,10 +14,9 @@ def show_about():
     - Health expenditure
     - Access to healthcare and sanitation
 
-    Use the sidebar to:
-    - Select indicator categories
-    - Filter by year or a custom year range
-    - View trends and make comparisons
-
-    ---
+    **Dashboard Features:**
+    - View and compare health indicators over time
+    - Pie chart summaries of indicator contributions
+    - Line charts and data tables
+    - Filter indicators by category, keyword (e.g. 'kids', 'female', etc.), year range, and sorting order
     """)
