@@ -1,4 +1,7 @@
 # Section 1: About
+
+import streamlit as st
+
 def show_about():
     st.title("About This Dashboard")
     st.markdown("""
