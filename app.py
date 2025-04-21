@@ -50,3 +50,35 @@ if filtered.empty:
 else:
     st.subheader("Filtered Health Data")
     st.dataframe(filtered)  
+
+# Making Chart Using Filtered Data
+if filtered.empty:
+    st.warning("No data available for the selected filters.")
+else:
+    # Plot the data
+    fig = px.line(
+    filtered,
+    x="Year", 
+    y="Value", 
+    color="Indicator Name", 
+    markers=True,
+    title="Health Indicator Trends in Sri Lanka",
+    height=500
+)
+
+# Chart Legend
+fig.update_layout(
+    legend=dict(
+        orientation="h",        
+        yanchor="bottom",       
+        y=-0.5,               
+        xanchor="center",       
+        x=0.5
+    ),
+    margin=dict(
+        b=150                   
+    )
+)
+
+
+st.plotly_chart(fig, use_container_width=True)
