@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Categories dictionary (same as before)
+# Categories and their indicator mappings
 categories = {
     "Maternal and Child Health": [
         "Adolescent fertility rate (births per 1,000 women ages 15-19)",
@@ -50,18 +50,59 @@ categories = {
     ]
 }
 
+# Background image mapping for categories
+background_images = {
+    "Maternal and Child Health": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Mother%20smiling%20at%20the%20child%202.jpg",
+    "Infectious Diseases": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/picture2.jpg",
+    "Nutrition and Food Security": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/image_21e6d3c403.jpg",
+    "Health Expenditures": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/health.jpg",
+    "Population Health and Demographics": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Web-Banner-Health-o4f17s40uhwhne99pga2mrovntcwm1s7r06v5rb0gc.jpg",
+    "Mortality Rates": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/images.jpeg"
+}
+
+def set_background(image_url):
+    st.markdown(f"""
+        <style>
+            .stApp {{
+                background-image: url('{image_url}');
+                background-size: cover;
+                background-position: center;
+            }}
+            .overlay::before {{
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 0;
+            }}
+        </style>
+        <div class="overlay"></div>
+    """, unsafe_allow_html=True)
+
 def show_dashboard(df, category, selected_indicators, year_range, sort_order, keyword_filter):
+    image_url = background_images.get(category, None)
+    if image_url:
+        set_background(image_url)
+
     st.title("Health Data Dashboard")
     start_year, end_year = year_range
 
-    # Filter for years
+    # Filter by year
     filtered = df[df['Year'].between(start_year, end_year)]
 
-    # Sort years
+    # Sort order
     ascending = True if sort_order == "Oldest to Newest" else False
     filtered = filtered.sort_values("Year", ascending=ascending)
 
-    # ---- PIE CHARTS by Year ----
+    # Filter indicators by keyword
+    if keyword_filter != "All":
+        keyword = keyword_filter.lower()
+        filtered = filtered[filtered['Indicator Name'].str.lower().str.contains(keyword)]
+
+    # Show pie charts per year for category
     st.subheader(f"Category Overview: {category}")
     category_indicators = categories[category]
     category_data = filtered[filtered["Indicator Name"].isin(category_indicators)]
@@ -69,17 +110,14 @@ def show_dashboard(df, category, selected_indicators, year_range, sort_order, ke
     for year in sorted(category_data['Year'].unique()):
         yearly_data = category_data[category_data['Year'] == year]
         pie_data = yearly_data.groupby("Indicator Name")["Value"].sum().reset_index()
-
         if not pie_data.empty:
-            fig = px.pie(pie_data, names="Indicator Name", values="Value",
-                         title=f"{category} Distribution - {year}")
+            fig = px.pie(pie_data, names="Indicator Name", values="Value", title=f"{category} Distribution - {year}")
             st.plotly_chart(fig, use_container_width=True)
 
-    # ---- Line Charts + Tables for Selected Indicators ----
+    # Line charts and data for selected indicators
     if selected_indicators:
         for indicator in selected_indicators:
             st.subheader(f"{indicator} Over Time")
-
             chart_data = filtered[filtered["Indicator Name"] == indicator]
 
             fig_line = px.line(chart_data, x="Year", y="Value", color="Country Name", title=indicator)
