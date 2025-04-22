@@ -3,6 +3,7 @@ import streamlit as st
 st.markdown(
     """
     <style>
+    /* Apply background image and overlay to the entire sidebar */
     [data-testid="stSidebar"]::before {
         content: "";
         position: absolute;
@@ -13,10 +14,11 @@ st.markdown(
         background-image: url("https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/png-transparent-medicine-health-care-logo-health-love-text-heart-thumbnail.png");
         background-size: cover;
         background-position: center;
-        opacity: 0.3;
+        opacity: 0.3; /* Slight opacity to the background */
         z-index: 0;
     }
 
+    /* White overlay with 70% opacity over the image */
     [data-testid="stSidebar"]::after {
         content: "";
         position: absolute;
@@ -28,10 +30,19 @@ st.markdown(
         z-index: 1;
     }
 
+    /* Ensure text is above the background and white overlay */
     [data-testid="stSidebar"] * {
         position: relative;
         z-index: 2;
         color: black !important; /* Make all sidebar text black */
+    }
+
+    /* Adding margin-top to avoid overlap with other components */
+    .sidebar .css-1d391kg {
+        margin-top: 20px;
+    }
+    .sidebar .css-1d391kg .css-1v0mbdj {
+        padding-top: 10px;
     }
     </style>
     """,
