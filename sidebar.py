@@ -44,7 +44,6 @@ def sidebar_filters(df):
     unsafe_allow_html=True
 )
 
-
     # Define the categories and their associated indicators
     categories = {
         "Maternal and Child Health": [
@@ -116,3 +115,21 @@ def sidebar_filters(df):
     sort_order = st.sidebar.radio("Sort Year", ["Oldest to Newest", "Newest to Oldest"])
 
     return category, selected_indicators, year_range, sort_order, keyword_filter
+
+
+def filter_data_by_keywords(df, keyword):
+    """Filters data based on keyword search in the 'Indicator' column."""
+    return df[df['Indicator'].str.contains(keyword, case=False, na=False)]
+
+
+def get_selected_category_image(category):
+    """Returns the background image URL based on the selected category."""
+    category_images = {
+        "Maternal and Child Health": "https://github.com/iffathsaleem/DSPL_ICW/blob/main/Images/Mother%20smiling%20at%20the%20child%202.jpg",
+        "Infectious Diseases": "https://github.com/iffathsaleem/DSPL_ICW/blob/main/Images/picture2.jpg",
+        "Nutrition and Food Security": "https://github.com/iffathsaleem/DSPL_ICW/blob/main/Images/image_21e6d3c403.jpg",
+        "Health Expenditures": "https://github.com/iffathsaleem/DSPL_ICW/blob/main/Images/health.jpg",
+        "Population Health and Demographics": "https://github.com/iffathsaleem/DSPL_ICW/blob/main/Images/Web-Banner-Health-o4f17s40uhwhne99pga2mrovntcwm1s7r06v5rb0gc.jpg",
+        "Mortality Rates": "https://github.com/iffathsaleem/DSPL_ICW/blob/main/Images/images.jpeg"
+    }
+    return category_images.get(category, "")
