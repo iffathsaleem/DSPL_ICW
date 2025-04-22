@@ -1,49 +1,6 @@
 import streamlit as st
 
 def sidebar_filters(df):
-    st.sidebar.markdown(
-    """
-    <style>
-    [data-testid="stSidebar"] {
-        background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
-                          url('https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/png-transparent-medicine-health-care-logo-health-love-text-heart-thumbnail.png');
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-    }
-
-    /* Ensure white text for all sidebar elements */
-    .stSelectbox div[data-baseweb="select"],
-    .stMultiSelect div[data-baseweb="select"],
-    .stSlider,
-    .stRadio,
-    .css-1cpxqw2, .css-1v0mbdj, .css-1r6slb0,
-    label, .css-10trblm, .css-qrbaxs, .css-16huue1 {
-        color: white !important;
-    }
-
-    /* Fix multiselect selected pills */
-    .css-1n76uvr, .css-1p3m7a8 {
-        background-color: #444 !important;
-        color: white !important;
-        border: 1px solid white !important;
-    }
-
-    /* Select box internal text (selected value) */
-    .stSelectbox > div > div,
-    .stMultiSelect > div > div {
-        color: white !important;
-    }
-
-    /* Dropdown options text */
-    .css-1wa3eu0-option {
-        color: black !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
     # Define the categories and their associated indicators
     categories = {
         "Maternal and Child Health": [
@@ -91,45 +48,12 @@ def sidebar_filters(df):
             "Suicide mortality rate (per 100,000 population)"
         ]
     }
-
-    # Sidebar filters
+    
+    # Sidebar filters for category, indicators, year range, etc.
     category = st.sidebar.selectbox("Select Category", list(categories.keys()))
-    keyword_filter = st.sidebar.selectbox("Filter indicators by keyword", ["All", "kids", "female", "male"])
-
-    # Filter indicators based on category and keyword
-    indicators = categories[category]
-    if keyword_filter != "All":
-        indicators = [i for i in indicators if keyword_filter.lower() in i.lower()]
-
-    selected_indicators = st.sidebar.multiselect("Select Indicator(s)", indicators)
-
-    # Year selection
-    years = sorted(df['Year'].dropna().unique())
-    year_range = st.sidebar.slider(
-        "Select Year Range",
-        int(min(years)), int(max(years)),
-        (int(min(years)), int(max(years)))
-    )
-
-    # Sorting
-    sort_order = st.sidebar.radio("Sort Year", ["Oldest to Newest", "Newest to Oldest"])
+    selected_indicators = st.sidebar.multiselect("Select Indicators", categories[category], default=categories[category])
+    year_range = st.sidebar.slider("Select Year Range", int(df['Year'].min()), int(df['Year'].max()), (int(df['Year'].min()), int(df['Year'].max())))
+    sort_order = st.sidebar.radio("Sort Order", ["Ascending", "Descending"])
+    keyword_filter = st.sidebar.text_input("Filter by Keyword (e.g. 'female', 'kids')")
 
     return category, selected_indicators, year_range, sort_order, keyword_filter
-
-
-def filter_data_by_keywords(df, keyword):
-    # Ensure the column name matches the actual one in your DataFrame
-    return df[df['Indicator Name'].str.contains(keyword, case=False, na=False)]
-
-
-def get_selected_category_image(category):
-    """Returns the background image URL based on the selected category."""
-    category_images = {
-        "Maternal and Child Health": "https://github.com/iffathsaleem/DSPL_ICW/blob/main/Images/Mother%20smiling%20at%20the%20child%202.jpg",
-        "Infectious Diseases": "https://github.com/iffathsaleem/DSPL_ICW/blob/main/Images/picture2.jpg",
-        "Nutrition and Food Security": "https://github.com/iffathsaleem/DSPL_ICW/blob/main/Images/image_21e6d3c403.jpg",
-        "Health Expenditures": "https://github.com/iffathsaleem/DSPL_ICW/blob/main/Images/health.jpg",
-        "Population Health and Demographics": "https://github.com/iffathsaleem/DSPL_ICW/blob/main/Images/Web-Banner-Health-o4f17s40uhwhne99pga2mrovntcwm1s7r06v5rb0gc.jpg",
-        "Mortality Rates": "https://github.com/iffathsaleem/DSPL_ICW/blob/main/Images/images.jpeg"
-    }
-    return category_images.get(category, "")
