@@ -67,7 +67,6 @@ sidebar_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/mai
 def set_sidebar_background(image_url):
     st.markdown(f"""
         <style>
-            /* Apply the new background image and overlay to the entire sidebar */
             [data-testid="stSidebar"]::before {{
                 content: "";
                 position: absolute;
@@ -78,10 +77,9 @@ def set_sidebar_background(image_url):
                 background-image: url('{image_url}');
                 background-size: cover;
                 background-position: center;
-                opacity: 0.3; /* Slight opacity to the background */
+                opacity: 0.3;
                 z-index: 0;
             }}
-            /* White overlay with 70% opacity over the image */
             [data-testid="stSidebar"]::after {{
                 content: "";
                 position: absolute;
@@ -89,14 +87,13 @@ def set_sidebar_background(image_url):
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background-color: rgba(255, 255, 255, 0.7); /* 70% white overlay */
+                background-color: rgba(255, 255, 255, 0.7);
                 z-index: 1;
             }}
-            /* Ensure text is above the background and white overlay */
             [data-testid="stSidebar"] * {{
                 position: relative;
                 z-index: 2;
-                color: black !important; /* Make all sidebar text black */
+                color: black !important;
             }}
         </style>
     """, unsafe_allow_html=True)
@@ -126,10 +123,8 @@ def set_background(image_url):
 
 # Show dashboard with selected category and filters
 def show_dashboard(df, category, selected_indicators, year_range, sort_order, keyword_filter):
-    # Set the sidebar background
     set_sidebar_background(sidebar_image_url)
 
-    # Set the main app background image
     image_url = background_images.get(category, None)
     if image_url:
         set_background(image_url)
@@ -173,3 +168,74 @@ def show_dashboard(df, category, selected_indicators, year_range, sort_order, ke
             st.dataframe(chart_data[["Country Name", "Year", "Value"]])
     else:
         st.info("Select indicator(s) from the sidebar to view charts and data.")
+
+# Overview Dashboard
+def show_overview_dashboard(df):
+    st.title("Overview Dashboard")
+    total_indicators = df['Indicator Name'].nunique()
+    latest_year = df['Year'].max()
+    avg_value = df['Value'].mean()
+    st.write(f"Total Number of Indicators: {total_indicators}")
+    st.write(f"Latest Data Year: {latest_year}")
+    st.write(f"Average Value across all Indicators: {avg_value:.2f}")
+
+# Trends Over Time
+def show_trends_over_time(df, selected_indicators):
+    st.title("Trends Over Time")
+    if selected_indicators:
+        for indicator in selected_indicators:
+            st.subheader(f"{indicator} Over Time")
+            chart_data = df[df["Indicator Name"] == indicator]
+            fig_line = px.line(chart_data, x="Year", y="Value", color="Country Name", title=indicator)
+            st.plotly_chart(fig_line)
+            st.dataframe(chart_data[["Country Name", "Year", "Value"]])
+    else:
+        st.info("Select indicator(s) from the sidebar to view charts and data.")
+
+# Demographic Insights
+def show_demographic_insights(df):
+    st.title("Demographic Insights")
+    female_indicators = df[df['Indicator Name'].str.contains("female", case=False)]
+    male_indicators = df[df['Indicator Name'].str.contains("male", case=False)]
+    children_indicators = df[df['Indicator Name'].str.contains("children", case=False)]
+
+    st.write("Indicators for Female:")
+    st.dataframe(female_indicators)
+    st.write("Indicators for Male:")
+    st.dataframe(male_indicators)
+    st.write("Indicators for Children:")
+    st.dataframe(children_indicators)
+
+# Expenditure Analysis
+def show_expenditure_analysis(df):
+    st.title("Expenditure Analysis")
+    expenditure_data = df[df["Indicator Name"].str.contains("health expenditure", case=False)]
+    st.write("Health Expenditure Data:")
+    st.dataframe(expenditure_data)
+
+# Mortality & Morbidity
+def show_mortality_morbidity(df):
+    st.title("Mortality & Morbidity")
+    mortality_data = df[df["Indicator Name"].str.contains("mortality", case=False)]
+    st.write("Mortality & Morbidity Data:")
+    st.dataframe(mortality_data)
+
+# Comparative Insights
+def show_comparative_insights(df):
+    st.title("Comparative Insights")
+    urban_data = df[df["Indicator Name"].str.contains("urban", case=False)]
+    rural_data = df[df["Indicator Name"].str.contains("rural", case=False)]
+    st.write("Urban Data:")
+    st.dataframe(urban_data)
+    st.write("Rural Data:")
+    st.dataframe(rural_data)
+
+# Key Indicator Highlights
+def show_key_indicator_highlights(df):
+    st.title("Key Indicator Highlights")
+    top_rising = df.nlargest(5, 'Value')
+    top_falling = df.nsmallest(5, 'Value')
+    st.write("Top Rising Indicators:")
+    st.dataframe(top_rising)
+    st.write("Top Falling Indicators:")
+    st.dataframe(top_falling)
