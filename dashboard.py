@@ -179,18 +179,69 @@ def show_overview_dashboard(df):
     st.write(f"Latest Data Year: {latest_year}")
     st.write(f"Average Value across all Indicators: {avg_value:.2f}")
 
+    # Display indicator groups
+    st.markdown("### Indicator Groupings")
+    for group, indicators in categories.items():
+        st.subheader(group)
+        st.markdown(", ".join(indicators))  # List the indicators for the group
+        st.markdown("---")
+
 # Trends Over Time
-def show_trends_over_time(df, selected_indicators):
-    st.title("Trends Over Time")
-    if selected_indicators:
-        for indicator in selected_indicators:
-            st.subheader(f"{indicator} Over Time")
-            chart_data = df[df["Indicator Name"] == indicator]
-            fig_line = px.line(chart_data, x="Year", y="Value", color="Country Name", title=indicator)
-            st.plotly_chart(fig_line)
-            st.dataframe(chart_data[["Country Name", "Year", "Value"]])
+def show_trends_over_time(data, selected_indicators):
+    # Filter data based on selected indicators
+    chart_data = data[data['Indicator Name'].isin(selected_indicators)]
+
+    # Create the line chart with different colors for each indicator
+    fig_line = px.line(chart_data, x="Year", y="Value", color="Indicator Name", title="Trends Over Time")
+
+    # Modify layout to place the legend below the chart and avoid overlap
+    fig_line.update_layout(
+        legend=dict(
+            orientation="h", 
+            yanchor="bottom",  
+            y=-0.5,  
+            xanchor="center",  
+            x=0.5, 
+            tracegroupgap=0,  
+            itemwidth=50,  
+            itemsizing='constant',  
+        ),
+        margin=dict(b=100) 
+    )
+
+    # Show the plot in Streamlit
+    st.plotly_chart(fig_line)
+
+# Comparative Insights
+def show_comparative_insights(df):
+    st.title("Comparative Insights")
+    
+    comparison_indicators = df[df['Indicator Name'].str.contains("comparison", case=False)]
+    
+    st.write("Indicators for Comparative Insights:")
+    st.dataframe(comparison_indicators)
+
+def show_key_indicator_highlights(df):
+    st.title("Key Indicator Highlights")
+    
+    # List of all indicators
+    all_indicators = df['Indicator Name'].unique().tolist()
+    
+    # Let the user select the indicators they want to highlight
+    selected_indicators = st.multiselect(
+        "Select Key Indicators to Highlight", all_indicators, default=all_indicators[:5]
+    )
+    
+    # Filter data based on selected indicators
+    selected_data = df[df['Indicator Name'].isin(selected_indicators)]
+    
+    # Show the filtered data
+    if not selected_data.empty:
+        st.write(f"Showing selected key health indicators:")
+        st.dataframe(selected_data)
     else:
-        st.info("Select indicator(s) from the sidebar to view charts and data.")
+        st.info("No indicators selected. Please select indicators to display.")
+
 
 # Demographic Insights
 def show_demographic_insights(df):
@@ -209,33 +260,13 @@ def show_demographic_insights(df):
 # Expenditure Analysis
 def show_expenditure_analysis(df):
     st.title("Expenditure Analysis")
-    expenditure_data = df[df["Indicator Name"].str.contains("health expenditure", case=False)]
-    st.write("Health Expenditure Data:")
-    st.dataframe(expenditure_data)
+    expenditure_indicators = df[df['Indicator Name'].str.contains("expenditure", case=False)]
+    st.write("Indicators related to Health Expenditure:")
+    st.dataframe(expenditure_indicators)
 
-# Mortality & Morbidity
-def show_mortality_morbidity(df):
-    st.title("Mortality & Morbidity")
-    mortality_data = df[df["Indicator Name"].str.contains("mortality", case=False)]
-    st.write("Mortality & Morbidity Data:")
-    st.dataframe(mortality_data)
-
-# Comparative Insights
-def show_comparative_insights(df):
-    st.title("Comparative Insights")
-    urban_data = df[df["Indicator Name"].str.contains("urban", case=False)]
-    rural_data = df[df["Indicator Name"].str.contains("rural", case=False)]
-    st.write("Urban Data:")
-    st.dataframe(urban_data)
-    st.write("Rural Data:")
-    st.dataframe(rural_data)
-
-# Key Indicator Highlights
-def show_key_indicator_highlights(df):
-    st.title("Key Indicator Highlights")
-    top_rising = df.nlargest(5, 'Value')
-    top_falling = df.nsmallest(5, 'Value')
-    st.write("Top Rising Indicators:")
-    st.dataframe(top_rising)
-    st.write("Top Falling Indicators:")
-    st.dataframe(top_falling)
+# Mortality Trends
+def show_mortality_trends(df):
+    st.title("Mortality Trends")
+    mortality_indicators = df[df['Indicator Name'].str.contains("mortality", case=False)]
+    st.write("Indicators related to Mortality:")
+    st.dataframe(mortality_indicators)

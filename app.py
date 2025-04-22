@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from sidebar import show_sidebar, sidebar_filters
 from dashboard import show_overview_dashboard, show_trends_over_time, show_demographic_insights, \
-                      show_expenditure_analysis, show_mortality_morbidity, show_comparative_insights, \
+                      show_expenditure_analysis, show_mortality_trends, show_comparative_insights, \
                       show_key_indicator_highlights
 from about import show_about
 
@@ -28,7 +28,7 @@ def main():
     elif page == "Expenditure Analysis":
         show_expenditure_analysis(health)
     elif page == "Mortality & Morbidity":
-        show_mortality_morbidity(health)
+        show_mortality_trends(health)  # Corrected function name here
     elif page == "Comparative Insights":
         show_comparative_insights(health)
     elif page == "Key Indicator Highlights":
