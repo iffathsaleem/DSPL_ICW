@@ -1,5 +1,43 @@
 import streamlit as st
 
+st.markdown(
+    """
+    <style>
+    [data-testid="stSidebar"]::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/png-transparent-medicine-health-care-logo-health-love-text-heart-thumbnail.png");
+        background-size: cover;
+        background-position: center;
+        opacity: 0.3;
+        z-index: 0;
+    }
+
+    [data-testid="stSidebar"]::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.7); /* 70% white overlay */
+        z-index: 1;
+    }
+
+    [data-testid="stSidebar"] * {
+        position: relative;
+        z-index: 2;
+        color: black !important; /* Make all sidebar text black */
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 def sidebar_filters(df):
     st.sidebar.title("Health Data Filters")
 
@@ -51,7 +89,6 @@ def sidebar_filters(df):
     }
 
     category = st.sidebar.selectbox("Select Category", list(categories.keys()))
-
     keyword_filter = st.sidebar.selectbox("Filter indicators by keyword", ["All", "kids", "female", "male"])
 
     indicators = categories[category]
@@ -61,7 +98,8 @@ def sidebar_filters(df):
     selected_indicators = st.sidebar.multiselect("Select Indicator(s)", indicators)
 
     years = sorted(df['Year'].dropna().unique())
-    year_range = st.sidebar.slider("Select Year Range", int(min(years)), int(max(years)), (int(min(years)), int(max(years))))
+    year_range = st.sidebar.slider("Select Year Range", int(min(years)), int(max(years)),
+                                   (int(min(years)), int(max(years))))
 
     sort_order = st.sidebar.radio("Sort Year", ["Oldest to Newest", "Newest to Oldest"])
 
