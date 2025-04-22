@@ -60,11 +60,14 @@ background_images = {
     "Mortality Rates": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/images.jpeg"
 }
 
+# Sidebar image URL
+sidebar_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/png-transparent-medicine-health-care-logo-health-love-text-heart-thumbnail.png"
+
 # Set background image for the sidebar
 def set_sidebar_background(image_url):
     st.markdown(f"""
         <style>
-            /* Apply background image and overlay to the entire sidebar */
+            /* Apply the new background image and overlay to the entire sidebar */
             [data-testid="stSidebar"]::before {{
                 content: "";
                 position: absolute;
@@ -98,6 +101,7 @@ def set_sidebar_background(image_url):
         </style>
     """, unsafe_allow_html=True)
 
+# Set main background for the app
 def set_background(image_url):
     st.markdown(f"""
         <style>
@@ -122,18 +126,13 @@ def set_background(image_url):
 
 # Show dashboard with selected category and filters
 def show_dashboard(df, category, selected_indicators, year_range, sort_order, keyword_filter):
-    if 'sidebar_background_set' not in st.session_state:
-        image_url = background_images.get(category, None)
-        if image_url:
-            set_sidebar_background(image_url)
-        st.session_state.sidebar_background_set = True  # Flag to ensure it is set only once
-    
+    # Set the sidebar background
+    set_sidebar_background(sidebar_image_url)
+
     # Set the main app background image
-    if 'background_image_set' not in st.session_state:
-        image_url = background_images.get(category, None)
-        if image_url:
-            set_background(image_url)
-        st.session_state.background_image_set = True  # Flag to ensure it is set only once
+    image_url = background_images.get(category, None)
+    if image_url:
+        set_background(image_url)
 
     st.title("Health Data Dashboard")
     start_year, end_year = year_range
