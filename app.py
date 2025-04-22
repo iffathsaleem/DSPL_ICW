@@ -4,21 +4,7 @@ from sidebar import sidebar_filters
 from about import show_about
 from dashboard import show_dashboard
 
-# Sidebar background
-def set_sidebar_background(image_url):
-    st.markdown(f"""
-        <style>
-        [data-testid="stSidebar"]::before {{
-            ...
-        }}
-        </style>
-    """, unsafe_allow_html=True)
-
-sidebar_bg_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/png-transparent-medicine-health-care-logo-health-love-text-heart-thumbnail.png"
-set_sidebar_background(sidebar_bg_url)
-
-
-# Load your health data
+# Load your health data from specified path
 health = pd.read_csv("Sri Lanka Health Statistics.csv")
 
 # Sidebar navigation
