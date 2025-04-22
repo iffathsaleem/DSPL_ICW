@@ -3,11 +3,13 @@ import pandas as pd
 
 def show_about():
     bg_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/public-service-img-new1-scaled.jpg"
+    sidebar_bg_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/png-transparent-medicine-health-care-logo-health-love-text-heart-thumbnail.png"
 
-    # Add background and dark overlay
+    # Add page background and sidebar background
     st.markdown(
         f"""
         <style>
+        /* Main background with overlay */
         .stApp {{
             background: linear-gradient(
                 rgba(0, 0, 0, 0.7), 
@@ -19,8 +21,43 @@ def show_about():
             background-attachment: fixed;
             color: white;
         }}
+
         .block-container {{
             background-color: rgba(0, 0, 0, 0);
+        }}
+
+        /* Sidebar background with overlay */
+        [data-testid="stSidebar"] {{
+            background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+                              url('{sidebar_bg_url}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }}
+
+        /* White text for sidebar elements */
+        .stSelectbox div[data-baseweb="select"],
+        .stMultiSelect div[data-baseweb="select"],
+        .stSlider,
+        .stRadio,
+        .css-1cpxqw2, .css-1v0mbdj, .css-1r6slb0,
+        label, .css-10trblm, .css-qrbaxs, .css-16huue1 {{
+            color: white !important;
+        }}
+
+        .css-1n76uvr, .css-1p3m7a8 {{
+            background-color: #444 !important;
+            color: white !important;
+            border: 1px solid white !important;
+        }}
+
+        .stSelectbox > div > div,
+        .stMultiSelect > div > div {{
+            color: white !important;
+        }}
+
+        .css-1wa3eu0-option {{
+            color: black !important;
         }}
         </style>
         """,
