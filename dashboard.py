@@ -60,96 +60,74 @@ background_images = {
     "Mortality Rates": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/images.jpeg"
 }
 
-# Set background image for the sidebar
+# Set sidebar background with dark overlay
 def set_sidebar_background(image_url):
     st.markdown(f"""
         <style>
-            /* Apply background image and overlay to the entire sidebar */
-            [data-testid="stSidebar"]::before {{
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-image: url('{image_url}');
-                background-size: cover;
-                background-position: center;
-                opacity: 0.3; /* Slight opacity to the background */
-                z-index: 0;
-            }}
-            /* White overlay with 70% opacity over the image */
-            [data-testid="stSidebar"]::after {{
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(255, 255, 255, 0.7); /* 70% white overlay */
-                z-index: 1;
-            }}
-            /* Ensure text is above the background and white overlay */
-            [data-testid="stSidebar"] * {{
-                position: relative;
-                z-index: 2;
-                color: black !important; /* Make all sidebar text black */
-            }}
+        [data-testid="stSidebar"]::before {{
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('{image_url}');
+            background-size: cover;
+            background-position: center;
+            z-index: 0;
+            opacity: 0.15;
+        }}
+        [data-testid="stSidebar"] > * {{
+            position: relative;
+            z-index: 1;
+            color: white !important;
+        }}
         </style>
     """, unsafe_allow_html=True)
 
+# Set main background with dark overlay
 def set_background(image_url):
     st.markdown(f"""
         <style>
-            .stApp {{
-                background-image: url('{image_url}');
-                background-size: cover;
-                background-position: center;
-            }}
-            .overlay::before {{
-                content: "";
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.7);
-                z-index: 0;
-            }}
+        .stApp {{
+            background: linear-gradient(
+                rgba(0, 0, 0, 0.7), 
+                rgba(0, 0, 0, 0.7)
+            ), url('{image_url}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: white;
+        }}
         </style>
-        <div class="overlay"></div>
     """, unsafe_allow_html=True)
 
-# Show dashboard with selected category and filters
+# Main dashboard function
 def show_dashboard(df, category, selected_indicators, year_range, sort_order, keyword_filter):
-    if 'sidebar_background_set' not in st.session_state:
-        image_url = background_images.get(category, None)
-        if image_url:
-            set_sidebar_background(image_url)
-        st.session_state.sidebar_background_set = True  # Flag to ensure it is set only once
-    
-    # Set the main app background image
-    if 'background_image_set' not in st.session_state:
-        image_url = background_images.get(category, None)
+    # Apply new background when category changes
+    if st.session_state.get("last_category") != category:
+        image_url = background_images.get(category)
         if image_url:
             set_background(image_url)
-        st.session_state.background_image_set = True 
+            set_sidebar_background(image_url)
+        st.session_state["last_category"] = category
+
     st.title("Health Data Dashboard")
     start_year, end_year = year_range
 
-    # Filter by year
+    # Filter data
     filtered = df[df['Year'].between(start_year, end_year)]
 
-    # Sort order
-    ascending = True if sort_order == "Oldest to Newest" else False
-    filtered = filtered.sort_values("Year", ascending=ascending)
+    # Sort by year
+    filtered = filtered.sort_values("Year", ascending=(sort_order == "Oldest to Newest"))
 
-    # Filter indicators by keyword
+    # Filter by keyword
     if keyword_filter != "All":
         keyword = keyword_filter.lower()
         filtered = filtered[filtered['Indicator Name'].str.lower().str.contains(keyword)]
 
-    # Show pie charts per year for category
+    # Show pie charts by year
     st.subheader(f"Category Overview: {category}")
     category_indicators = categories[category]
     category_data = filtered[filtered["Indicator Name"].isin(category_indicators)]
@@ -161,7 +139,7 @@ def show_dashboard(df, category, selected_indicators, year_range, sort_order, ke
             fig = px.pie(pie_data, names="Indicator Name", values="Value", title=f"{category} Distribution - {year}")
             st.plotly_chart(fig, use_container_width=True)
 
-    # Line charts and data for selected indicators
+    # Line charts for selected indicators
     if selected_indicators:
         for indicator in selected_indicators:
             st.subheader(f"{indicator} Over Time")
