@@ -133,8 +133,7 @@ def show_dashboard(df, category, selected_indicators, year_range, sort_order, ke
         image_url = background_images.get(category, None)
         if image_url:
             set_background(image_url)
-        st.session_state.background_image_set = True  # Flag to ensure it is set only once
-
+        st.session_state.background_image_set = True 
     st.title("Health Data Dashboard")
     start_year, end_year = year_range
 
