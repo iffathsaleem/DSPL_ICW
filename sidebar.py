@@ -118,8 +118,8 @@ def sidebar_filters(df):
 
 
 def filter_data_by_keywords(df, keyword):
-    """Filters data based on keyword search in the 'Indicator' column."""
-    return df[df['Indicator'].str.contains(keyword, case=False, na=False)]
+    # Ensure the column name matches the actual one in your DataFrame
+    return df[df['Indicator Name'].str.contains(keyword, case=False, na=False)]
 
 
 def get_selected_category_image(category):
