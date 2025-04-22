@@ -2,8 +2,7 @@ import streamlit as st
 import pandas as pd
 
 def show_about():
-    # Background image URL from GitHub
-    bg_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/public-service-img-new1-scaled.jpg"
+    bg_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/public-service-img-new1-scaled.jpg"
 
     # Add background and dark overlay
     st.markdown(
