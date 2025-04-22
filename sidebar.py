@@ -124,4 +124,3 @@ def sidebar_filters(df):
     sort_order = st.sidebar.radio("Sort Year", ["Oldest to Newest", "Newest to Oldest"])
 
     return category, selected_indicators, year_range, sort_order, keyword_filter
-
