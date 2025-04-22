@@ -1,57 +1,62 @@
 import streamlit as st
 
-st.markdown(
-    """
-    <style>
-    /* Apply background image and overlay to the entire sidebar */
-    [data-testid="stSidebar"]::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-image: url("https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/png-transparent-medicine-health-care-logo-health-love-text-heart-thumbnail.png");
-        background-size: cover;
-        background-position: center;
-        opacity: 0.3; /* Slight opacity to the background */
-        z-index: 0;
-    }
+def set_sidebar_background(image_url):
+    st.markdown(f"""
+        <style>
+        /* Apply background image and overlay to the entire sidebar */
+        [data-testid="stSidebar"]::before {{
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('{image_url}');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.3; /* Slight opacity to the background */
+            z-index: 0;
+        }}
 
-    /* White overlay with 70% opacity over the image */
-    [data-testid="stSidebar"]::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(255, 255, 255, 0.7); /* 70% white overlay */
-        z-index: 1;
-    }
+        /* White overlay with 70% opacity over the image */
+        [data-testid="stSidebar"]::after {{
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7); /* 70% white overlay */
+            z-index: 1;
+        }}
 
-    /* Ensure text is above the background and white overlay */
-    [data-testid="stSidebar"] * {
-        position: relative;
-        z-index: 2;
-        color: black !important; /* Make all sidebar text black */
-    }
+        /* Ensure text is above the background and white overlay */
+        [data-testid="stSidebar"] * {{
+            position: relative;
+            z-index: 2;
+            color: black !important; /* Make all sidebar text black */
+        }}
 
-    /* Adding margin-top to avoid overlap with other components */
-    .sidebar .css-1d391kg {
-        margin-top: 20px;
-    }
-    .sidebar .css-1d391kg .css-1v0mbdj {
-        padding-top: 10px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+        /* Adding margin-top to avoid overlap with other components */
+        .sidebar .css-1d391kg {{
+            margin-top: 20px;
+        }}
+        .sidebar .css-1d391kg .css-1v0mbdj {{
+            padding-top: 10px;
+        }}
+        </style>
+    """, unsafe_allow_html=True)
+
+background_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/png-transparent-medicine-health-care-logo-health-love-text-heart-thumbnail.png"
+
+if 'background_image_set' not in st.session_state:
+    set_sidebar_background(background_image_url)
+    st.session_state.background_image_set = True  
 
 def sidebar_filters(df):
     st.sidebar.title("Health Data Filters")
 
+    # Define the categories and their associated indicators
     categories = {
         "Maternal and Child Health": [
             "Adolescent fertility rate (births per 1,000 women ages 15-19)",
@@ -99,19 +104,23 @@ def sidebar_filters(df):
         ]
     }
 
+    # Sidebar Filters
     category = st.sidebar.selectbox("Select Category", list(categories.keys()))
     keyword_filter = st.sidebar.selectbox("Filter indicators by keyword", ["All", "kids", "female", "male"])
 
+    # Filter indicators based on selected category and keyword
     indicators = categories[category]
     if keyword_filter != "All":
         indicators = [i for i in indicators if keyword_filter.lower() in i.lower()]
 
     selected_indicators = st.sidebar.multiselect("Select Indicator(s)", indicators)
 
+    # Handle year selection
     years = sorted(df['Year'].dropna().unique())
     year_range = st.sidebar.slider("Select Year Range", int(min(years)), int(max(years)),
                                    (int(min(years)), int(max(years))))
 
+    # Handle year sorting
     sort_order = st.sidebar.radio("Sort Year", ["Oldest to Newest", "Newest to Oldest"])
 
     return category, selected_indicators, year_range, sort_order, keyword_filter
