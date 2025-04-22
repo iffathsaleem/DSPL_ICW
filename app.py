@@ -4,7 +4,7 @@ from sidebar import show_sidebar, sidebar_filters
 from dashboard import show_overview_dashboard, show_trends_over_time, show_demographic_insights, \
                       show_expenditure_analysis, show_mortality_morbidity, show_comparative_insights, \
                       show_key_indicator_highlights
-from about import show_about_page
+from about import show_about
 
 # Load your health data from the specified path
 health = pd.read_csv("Sri Lanka Health Statistics.csv")
@@ -18,7 +18,7 @@ def main():
 
     # Display content based on selection
     if page == "About":
-        show_about_page()
+        show_about()  # This is the correct function name
     elif page == "Overview Dashboard":
         show_overview_dashboard(health)
     elif page == "Trends Over Time":
