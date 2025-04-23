@@ -29,20 +29,23 @@ def show_about():
 
     st.title("About This Dashboard")
     st.markdown("""
-    This dashboard presents health indicators for **Sri Lanka** from **1960 to 2023**. It covers a wide range of topics:
+    Welcome to the **Sri Lanka Health Insights Dashboard**.  
+    This platform visualizes national health data from **1960 to 2023**, offering insights across:
 
-    - Fertility and birth rates  
-    - Mortality and life expectancy  
-    - Infectious diseases and HIV  
     - Maternal and child health  
+    - Infectious diseases and immunization  
+    - Nutrition and food security  
     - Health expenditure  
-    - Access to healthcare and sanitation  
+    - Population demographics  
+    - Mortality and life expectancy  
 
-    **Dashboard Features:**  
-    - View and compare health indicators over time  
-    - Pie chart summaries of indicator contributions  
-    - Line charts and data tables  
-    - Filter indicators by category, keyword (e.g. 'kids', 'female', etc.), year range, and sorting order  
+    ### Features:
+    - Interactive charts and visual breakdowns  
+    - Keyword + category filtering (e.g., “female”, “kids”)  
+    - Time-range comparisons  
+    - Pie, line, and bar visualizations  
+
+    **Built for data-driven insights and public health understanding.**
     """)
 
     st.markdown("### Interactive Map of Sri Lanka")

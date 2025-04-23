@@ -2,69 +2,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from sidebar import sidebar_filters
+from categories import categories, map_category
 
-import pandas as pd
-
-# Your categories dictionary
-categories = {
-    "Maternal and Child Health": [
-        "Adolescent fertility rate (births per 1,000 women ages 15-19)",
-        "Birth rate, crude (per 1,000 people)",
-        "Births attended by skilled health staff (% of total)",
-        "Low-birthweight babies (% of births)",
-        "Maternal mortality ratio (modeled estimate, per 100,000 live births)",
-        "Infant mortality rate (per 1,000 live births)",
-        "Exclusive breastfeeding (% of children under 6 months)"
-    ],
-    "Infectious Diseases": [
-        "Adults (ages 15+) and children (ages 0-14) newly infected with HIV",
-        "Incidence of HIV, all (per 1,000 uninfected population)",
-        "Incidence of tuberculosis (per 100,000 people)",
-        "Incidence of malaria (per 1,000 population at risk)",
-        "Immunization, DPT (% of children ages 12-23 months)"
-    ],
-    "Nutrition and Food Security": [
-        "Prevalence of anemia among children (% of children ages 6-59 months)",
-        "Prevalence of stunting, height for age (% of children under 5)",
-        "Prevalence of wasting, weight for height (% of children under 5)",
-        "Prevalence of underweight, weight for age (% of children under 5)",
-        "Prevalence of moderate or severe food insecurity in the population (%)"
-    ],
-    "Health Expenditures": [
-        "Current health expenditure (% of GDP)",
-        "Current health expenditure per capita (current US$)",
-        "Domestic general government health expenditure (% of GDP)",
-        "Domestic private health expenditure (% of current health expenditure)",
-        "Out-of-pocket expenditure (% of current health expenditure)"
-    ],
-    "Population Health and Demographics": [
-        "Life expectancy at birth, female (years)",
-        "Life expectancy at birth, male (years)",
-        "Population growth (annual %)",
-        "Population, female",
-        "Population, male",
-        "Women who were first married by age 18 (% of women ages 20-24)"
-    ],
-    "Mortality Rates": [
-        "Mortality rate, adult, female (per 1,000 female adults)",
-        "Mortality rate, infant (per 1,000 live births)",
-        "Mortality rate attributed to household and ambient air pollution, age-standardized (per 100,000 population)",
-        "Suicide mortality rate (per 100,000 population)"
-    ]
-}
-
-# Your health data
 health = pd.read_csv("Sri Lanka Health Statistics.csv")
 
-# Create a new column for 'Category'
-def map_category(indicator_name):
-    for category, indicators in categories.items():
-        if indicator_name in indicators:
-            return category
-    return "Other"  # Default to "Other" if no match is found
-
 health['Category'] = health['Indicator Name'].apply(map_category)
-
 
 # Background image mapping for categories
 background_images = {
@@ -217,82 +159,137 @@ def show_overview_dashboard(health):
     st.dataframe(health)
 
     # Indicator Groups
-    st.subheader("Indicator Groupings")
-    for group, indicators in categories.items():
-        st.markdown(f"**{group}**")
-        st.markdown("• " + "<br>• ".join(indicators), unsafe_allow_html=True)
 
-    # Bar Chart of Indicator Frequency (using Indicator Code)
-    st.subheader("Indicator Frequency by Code")
-    freq_health = health['Indicator_Code'].value_counts().reset_index()
-    freq_health.columns = ['Indicator_Code', 'Count']
-    fig_bar = px.bar(freq_health, x='Indicator_Code', y='Count', title="Frequency of Each Indicator (Code)")
-    st.plotly_chart(fig_bar)
+# Indicator Groups
+st.subheader("Indicator Groupings")
+for group in categories:
+    st.markdown(f"**{group}**")
+    st.markdown("• " + "<br>• ".join(categories[group]), unsafe_allow_html=True)
 
-    # Code-to-Name Legend Table
-    st.markdown("**Indicator Code Reference Table**")
-    code_name_health = health[['Indicator_Code', 'Indicator Name']].drop_duplicates().sort_values('Indicator_Code')
-    st.dataframe(code_name_health)
+# Bar Chart of Indicator Frequency (using Indicator Code)
+st.subheader("Indicator Frequency by Code")
+freq_health = health['Indicator_Code'].value_counts().reset_index()
+freq_health.columns = ['Indicator_Code', 'Count']
+fig_bar = px.bar(freq_health, x='Indicator_Code', y='Count', title="Frequency of Each Indicator (Code)")
+st.plotly_chart(fig_bar)
 
-    # Line Chart of Total Values Over Time
-    st.subheader("Total Indicator Values Over Time")
-    trend_health = health.groupby('Year')['Value'].sum().reset_index()
-    fig_line = px.line(trend_health, x='Year', y='Value', title="Trend of Total Indicator Values Over Time")
-    st.plotly_chart(fig_line)
+# Code-to-Name Legend Table
+st.markdown("**Indicator Code Reference Table**")
+code_name_health = health[['Indicator_Code', 'Indicator Name']].drop_duplicates().sort_values('Indicator_Code')
+st.dataframe(code_name_health)
 
-    # Histogram of Value Distribution
-    st.subheader("Distribution of Indicator Values")
-    fig_hist = px.histogram(health, x='Value', nbins=50, title="Distribution of All Indicator Values")
-    st.plotly_chart(fig_hist)
+# Line Chart of Total Values Over Time
+st.subheader("Total Indicator Values Over Time")
+trend_health = health.groupby('Year')['Value'].sum().reset_index()
+fig_line = px.line(trend_health, x='Year', y='Value', title="Trend of Total Indicator Values Over Time")
+st.plotly_chart(fig_line)
 
-    # Heatmap of Indicator Counts per Year (using Code)
-    st.subheader("Indicator Presence Heatmap (by Code and Year)")
-    heatmap_data = health.groupby(['Year', 'Indicator_Code']).size().unstack(fill_value=0)
-    fig_heat = px.imshow(heatmap_data.T, aspect='auto', title="Indicator Presence Over Years (by Code)")
-    st.plotly_chart(fig_heat)
+# Histogram of Value Distribution
+st.subheader("Distribution of Indicator Values")
+fig_hist = px.histogram(health, x='Value', nbins=50, title="Distribution of All Indicator Values")
+st.plotly_chart(fig_hist)
 
-    # Donut Chart of Indicator Counts by Category
-    st.subheader("Indicator Count by Category")
-    category_counts = {cat: len(indicators) for cat, indicators in categories.items()}
-    category_health = pd.DataFrame(list(category_counts.items()), columns=["Category", "Count"])
-    fig_donut = px.pie(category_health, names="Category", values="Count", hole=0.5, title="Indicator Distribution by Category")
-    st.plotly_chart(fig_donut)
+# Heatmap of Indicator Counts per Year (using Code)
+st.subheader("Indicator Presence Heatmap (by Code and Year)")
+heatmap_data = health.groupby(['Year', 'Indicator_Code']).size().unstack(fill_value=0)
+fig_heat = px.imshow(heatmap_data.T, aspect='auto', title="Indicator Presence Over Years (by Code)")
+st.plotly_chart(fig_heat)
 
+# Donut Chart of Indicator Counts by Category using map_category
+st.subheader("Indicator Count by Category")
+category_counts = {}
+for indicator in health['Indicator Name'].unique():
+    category = map_category(indicator)
+    if category not in category_counts:
+        category_counts[category] = 0
+    category_counts[category] += 1
+
+category_health = pd.DataFrame(list(category_counts.items()), columns=["Category", "Count"])
+fig_donut = px.pie(category_health, names="Category", values="Count", hole=0.5, title="Indicator Distribution by Category")
+st.plotly_chart(fig_donut)
 
 # Trends Over Time
-def show_trends_over_time(data, selected_indicators):
-    # Filter data based on selected indicators
-    chart_data = data[data['Indicator Name'].isin(selected_indicators)]
+def show_trends_over_time(data):
+    st.title("Trends Over Time by Category")
 
-    # Create the line chart with different colors for each indicator
-    fig_line = px.line(chart_data, x="Year", y="Value", color="Indicator Name", title="Trends Over Time")
+    for category_name, indicators in categories.items():
+        # Filter data for indicators in this category
+        category_data = data[data['Indicator Name'].isin(indicators)]
 
-    # Modify layout to place the legend below the chart and avoid overlap
-    fig_line.update_layout(
-        legend=dict(
-            orientation="h", 
-            yanchor="bottom",  
-            y=-0.5,  
-            xanchor="center",  
-            x=0.5, 
-            tracegroupgap=0,  
-            itemwidth=50,  
-            itemsizing='constant',  
-        ),
-        margin=dict(b=100) 
-    )
+        if category_data.empty:
+            continue  
 
-    # Show the plot in Streamlit
-    st.plotly_chart(fig_line)
+        # Create a line chart for this category
+        fig_line = px.line(
+            category_data,
+            x="Year",
+            y="Value",
+            color="Indicator Name",
+            title=f"{category_name} Trends Over Time"
+        )
+
+        fig_line.update_layout(
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=-0.7,
+                xanchor="center",
+                x=0.5,
+                tracegroupgap=0,
+                itemwidth=50,
+                itemsizing='constant',
+            ),
+            margin=dict(b=100)
+        )
+
+        st.plotly_chart(fig_line)
+
 
 # Comparative Insights
 def show_comparative_insights(health):
     st.title("Comparative Insights")
     
-    comparison_indicators = health[health['Indicator Name'].str.contains("comparison", case=False)]
+    # Line Chart for Life Expectancy at Birth (Female and Male)
+    life_expectancy_indicators = [
+        "Life expectancy at birth, female (years)", 
+        "Life expectancy at birth, male (years)"
+    ]
     
-    st.write("Indicators for Comparative Insights:")
-    st.dataframe(comparison_indicators)
+    life_expectancy_data = health[health['Indicator Name'].isin(life_expectancy_indicators)]
+
+    if life_expectancy_data.empty:
+        st.warning("No data available for life expectancy indicators.")
+    else:
+        st.subheader("Life Expectancy at Birth (Female & Male)")
+        
+        fig_life_expectancy = px.line(
+            life_expectancy_data,
+            x='Year',
+            y='Value',
+            color='Indicator Name',
+            markers=True,  # Add markers to data points
+            color_discrete_map={
+                "Life expectancy at birth, female (years)": "blue",
+                "Life expectancy at birth, male (years)": "green"
+            },
+            title="Life Expectancy at Birth: Female vs Male"
+        )
+        
+        fig_life_expectancy.update_layout(
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=-0.6,
+                xanchor="center",
+                x=0.5
+            ),
+            margin=dict(b=100),
+            xaxis=dict(
+                title="Year"
+            )
+        )
+        st.plotly_chart(fig_life_expectancy)
+    
 
 def show_key_indicator_highlights(health):
     st.title("Key Indicator Highlights")
@@ -340,84 +337,102 @@ def show_expenditure_analysis(health):
 # Mortality Trends
 def show_mortality_trends(health):
     st.title("Mortality Trends")
-    mortality_indicators = health[health['Indicator Name'].str.contains("mortality", case=False)]
-    st.write("Indicators related to Mortality:")
-    st.dataframe(mortality_indicators)
+    
+    # Get mortality indicators from categories.py
+    mortality_indicators = categories.get("Mortality Rates", [])
 
-# 1. Maternal and Child Health
+    st.markdown("**Indicators related to Mortality:**")
+    st.markdown("• " + "<br>• ".join(mortality_indicators), unsafe_allow_html=True)
+
+    # Filter data
+    mortality_data = health[health['Indicator Name'].isin(mortality_indicators)]
+
+    if mortality_data.empty:
+        st.warning("No data available for mortality indicators.")
+        return
+
+    # Show data
+    st.dataframe(mortality_data)
+
+def show_pie_chart(data, category_name, relevant_indicators=None):
+    st.subheader(f"{category_name} Breakdown")
+    
+    # Filter the data based on category
+    category_data = data[data['Category'] == category_name]
+    
+    # Filter the data for the relevant indicators, if provided
+    if relevant_indicators:
+        category_data = category_data[category_data['Indicator Name'].isin(relevant_indicators)]
+    
+    # Get the years from 1960 to 2023 (or the available range)
+    years = sorted(category_data['Year'].unique())
+    
+    # Iterate over each year and create a pie chart
+    for year in years:
+        year_data = category_data[category_data['Year'] == year]
+        
+        if year_data.empty:
+            st.warning(f"No data available for {category_name} in {year}.")
+            continue
+        
+        # Summarize data by the Indicator Name
+        summary = year_data.groupby('Indicator Name')['Value'].mean().reset_index()
+        
+        # Create pie chart for this year
+        fig = px.pie(summary, names='Indicator Name', values='Value', 
+                     title=f"Indicator Contribution in {category_name} ({year})", hole=0.3)
+        st.plotly_chart(fig)
+
+# Usage for Maternal and Child Health
 def show_maternal_child_piecharts(data):
-    st.subheader("Maternal & Child Health Breakdown")
-    category_data = data[data['Category'] == 'Maternal and Child Health']
-    latest_year = category_data['Year'].max()
-    recent_data = category_data[category_data['Year'] == latest_year]
-    if recent_data.empty:
-        st.warning("No data available for Maternal & Child Health in the selected year.")
-        return
-    summary = recent_data.groupby('Indicator Name')['Value'].mean().reset_index()
-    fig = px.pie(summary, names='Indicator Name', values='Value', title=f"Indicator Contribution in {latest_year}", hole=0.3)
-    st.plotly_chart(fig)
+    show_pie_chart(data, 'Maternal and Child Health')
 
-# 2. Infectious Diseases
+# Usage for Infectious Diseases
 def show_infectious_diseases_piecharts(data):
-    st.subheader("Infectious Diseases Breakdown")
-    category_data = data[data['Category'] == 'Infectious Diseases']
-    latest_year = category_data['Year'].max()
-    recent_data = category_data[category_data['Year'] == latest_year]
-    if recent_data.empty:
-        st.warning("No data available for Infectious Diseases in the selected year.")
-        return
-    summary = recent_data.groupby('Indicator Name')['Value'].mean().reset_index()
-    fig = px.pie(summary, names='Indicator Name', values='Value', title=f"Indicator Contribution in {latest_year}", hole=0.3)
-    st.plotly_chart(fig)
+    show_pie_chart(data, 'Infectious Diseases')
 
-# 3. Nutrition and Food Security
+# Usage for Nutrition and Food Security
 def show_nutrition_foodsecurity_piecharts(data):
-    st.subheader("Nutrition & Food Security Breakdown")
-    category_data = data[data['Category'] == 'Nutrition and Food Security']
-    latest_year = category_data['Year'].max()
-    recent_data = category_data[category_data['Year'] == latest_year]
-    if recent_data.empty:
-        st.warning("No data available for Nutrition & Food Security in the selected year.")
-        return
-    summary = recent_data.groupby('Indicator Name')['Value'].mean().reset_index()
-    fig = px.pie(summary, names='Indicator Name', values='Value', title=f"Indicator Contribution in {latest_year}", hole=0.3)
-    st.plotly_chart(fig)
+    show_pie_chart(data, 'Nutrition and Food Security')
 
-# 4. Health Expenditures
+# Usage for Health Expenditures
 def show_expenditure_piecharts(data):
-    st.subheader("Health Expenditure Breakdown")
-    category_data = data[data['Category'] == 'Health Expenditures']
-    latest_year = category_data['Year'].max()
-    recent_data = category_data[category_data['Year'] == latest_year]
-    if recent_data.empty:
-        st.warning("No data available for Health Expenditures in the selected year.")
-        return
-    summary = recent_data.groupby('Indicator Name')['Value'].mean().reset_index()
-    fig = px.pie(summary, names='Indicator Name', values='Value', title=f"Indicator Contribution in {latest_year}", hole=0.3)
-    st.plotly_chart(fig)
+    show_pie_chart(data, 'Health Expenditures')
 
-# 5. Population Health and Demographics
 def show_population_piecharts(data):
-    st.subheader("Population Health & Demographics Breakdown")
+    relevant_indicators = [
+        "Life expectancy at birth, female (years)",
+        "Life expectancy at birth, male (years)",
+        "Population growth (annual %)",
+        "Population, female",
+        "Population, male",
+        "Women who were first married by age 18 (% of women ages 20-24)"
+    ]
+    
+    # Filter the data for Population Health and Demographics
     category_data = data[data['Category'] == 'Population Health and Demographics']
-    latest_year = category_data['Year'].max()
-    recent_data = category_data[category_data['Year'] == latest_year]
-    if recent_data.empty:
-        st.warning("No data available for Population Health & Demographics in the selected year.")
-        return
-    summary = recent_data.groupby('Indicator Name')['Value'].mean().reset_index()
-    fig = px.pie(summary, names='Indicator Name', values='Value', title=f"Indicator Contribution in {latest_year}", hole=0.3)
-    st.plotly_chart(fig)
+    
+    # Filter the data for the relevant indicators
+    relevant_data = category_data[category_data['Indicator Name'].isin(relevant_indicators)]
+    
+    # Get the years from 1960 to 2023 (or the available range)
+    years = sorted(relevant_data['Year'].unique())
+    
+    # Iterate over each year and create a pie chart
+    for year in years:
+        year_data = relevant_data[relevant_data['Year'] == year]
+        
+        # Summarize the relevant data by averaging the 'Value' for each indicator
+        summary = year_data.groupby('Indicator Name')['Value'].mean().reset_index()
 
-# 6. Mortality Rates
+        # Ensure there are no zero or NaN values for the pie chart
+        summary = summary[summary['Value'] > 0]
+        
+        # Create pie chart with proper values
+        fig = px.pie(summary, names='Indicator Name', values='Value', 
+                     title=f"Indicator Contribution in Population Health and Demographics ({year})", hole=0.3)
+        st.plotly_chart(fig)
+
+# Usage for Mortality Rates
 def show_mortality_piecharts(data):
-    st.subheader("Mortality Rates Breakdown")
-    category_data = data[data['Category'] == 'Mortality Rates']
-    latest_year = category_data['Year'].max()
-    recent_data = category_data[category_data['Year'] == latest_year]
-    if recent_data.empty:
-        st.warning("No data available for Mortality Rates in the selected year.")
-        return
-    summary = recent_data.groupby('Indicator Name')['Value'].mean().reset_index()
-    fig = px.pie(summary, names='Indicator Name', values='Value', title=f"Indicator Contribution in {latest_year}", hole=0.3)
-    st.plotly_chart(fig)
+    show_pie_chart(data, 'Mortality Rates')

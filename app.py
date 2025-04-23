@@ -8,17 +8,12 @@ from dashboard import show_overview_dashboard, show_trends_over_time, show_demog
                       show_nutrition_foodsecurity_piecharts, show_expenditure_piecharts, \
                       show_population_piecharts, show_mortality_piecharts
 from about import show_about
+from categories import map_category  
 
 # Load health data
 health = pd.read_csv("Sri Lanka Health Statistics.csv")
 
-# Add the 'Category' column based on your mapping
-def map_category(indicator_name):
-    for category, indicators in categories.items():
-        if indicator_name in indicators:
-            return category
-    return "Other"
-
+# Apply category mapping
 health['Category'] = health['Indicator Name'].apply(map_category)
 
 def main():
@@ -34,7 +29,7 @@ def main():
     elif page == "Overview Dashboard":
         show_overview_dashboard(health)
     elif page == "Trends Over Time":
-        show_trends_over_time(health, selected_indicators)
+        show_trends_over_time(health)
     elif page == "Demographic Insights":
         show_demographic_insights(health)
     elif page == "Expenditure Analysis":
@@ -45,18 +40,19 @@ def main():
         show_comparative_insights(health)
     elif page == "Key Indicator Highlights":
         show_key_indicator_highlights(health)
-    elif page == "Maternal & Child Health Breakdown":
+    elif page == "Maternal and Child Health":
         show_maternal_child_piecharts(health)
-    elif page == "Infectious Diseases Breakdown":
+    elif page == "Infectious Diseases":
         show_infectious_diseases_piecharts(health)
-    elif page == "Nutrition & Food Security Breakdown":
+    elif page == "Nutrition and Food Security":
         show_nutrition_foodsecurity_piecharts(health)
-    elif page == "Health Expenditure Breakdown":
+    elif page == "Health Expenditures":
         show_expenditure_piecharts(health)
-    elif page == "Population Health & Demographics Breakdown":
+    elif page == "Population Health and Demographics":
         show_population_piecharts(health)
-    elif page == "Mortality Rates Breakdown":
+    elif page == "Mortality Rates":
         show_mortality_piecharts(health)
 
+# Run the app
 if __name__ == "__main__":
     main()
