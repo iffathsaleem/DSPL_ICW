@@ -1,32 +1,31 @@
 import streamlit as st
 import pandas as pd
-
 from sidebar import show_sidebar, sidebar_filters
-from dashboard import (
-    show_overview_dashboard,
-    show_trends_over_time,
-    show_demographic_insights,
-    show_expenditure_analysis,
-    show_mortality_trends,
-    show_comparative_insights,
-    show_key_indicator_highlights,
-    show_maternal_child_piecharts,
-    show_infectious_diseases_piecharts,
-    show_nutrition_foodsecurity_piecharts,
-    show_expenditure_piecharts,
-    show_population_piecharts,
-    show_mortality_piecharts
-)
+from dashboard import show_overview_dashboard, show_trends_over_time, show_demographic_insights, \
+                      show_expenditure_analysis, show_mortality_trends, show_comparative_insights, \
+                      show_key_indicator_highlights, \
+                      show_maternal_child_piecharts, show_infectious_diseases_piecharts, \
+                      show_nutrition_foodsecurity_piecharts, show_expenditure_piecharts, \
+                      show_population_piecharts, show_mortality_piecharts
 from about import show_about
 
-# Load your health data
+# Load health data
 health = pd.read_csv("Sri Lanka Health Statistics.csv")
+
+# Add the 'Category' column based on your mapping
+def map_category(indicator_name):
+    for category, indicators in categories.items():
+        if indicator_name in indicators:
+            return category
+    return "Other"
+
+health['Category'] = health['Indicator Name'].apply(map_category)
 
 def main():
     # Sidebar Navigation
     page = show_sidebar()
 
-    # Sidebar Filters
+    # Filters
     category, selected_indicators, year_range, sort_order, keyword_filter = sidebar_filters(health)
 
     # Display content based on selection
@@ -46,8 +45,6 @@ def main():
         show_comparative_insights(health)
     elif page == "Key Indicator Highlights":
         show_key_indicator_highlights(health)
-    
-    # Category Breakdown Pie Chart Pages
     elif page == "Maternal & Child Health Breakdown":
         show_maternal_child_piecharts(health)
     elif page == "Infectious Diseases Breakdown":
