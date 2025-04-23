@@ -19,7 +19,7 @@ background_images = {
 }
 
 # Sidebar image URL
-sidebar_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/png-transparent-medicine-health-care-logo-health-love-text-heart-thumbnail.png"
+sidebar_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Sidebar.png"
 
 # Set background image for the sidebar
 def set_sidebar_background(image_url):

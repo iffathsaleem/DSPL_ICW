@@ -1,7 +1,7 @@
 import streamlit as st
 from categories import categories
 
-
+# Function to set sidebar background
 def set_sidebar_background(image_url):
     st.markdown(f"""
         <style>
@@ -36,12 +36,32 @@ def set_sidebar_background(image_url):
         </style>
     """, unsafe_allow_html=True)
 
-background_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Sidebar.png"
-
-if 'background_image_set' not in st.session_state:
+# Function to display the sidebar and handle navigation
+def show_sidebar():
+    # Apply background image globally
+    background_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Sidebar.png"
     set_sidebar_background(background_image_url)
-    st.session_state.background_image_set = True  
 
+    st.sidebar.title("Navigation")
+    page = st.sidebar.radio("Select a page", [
+        "About", 
+        "Overview Dashboard", 
+        "Trends Over Time", 
+        "Demographic Insights", 
+        "Expenditure Analysis", 
+        "Mortality & Morbidity", 
+        "Comparative Insights", 
+        "Key Indicator Highlights",
+        "Maternal and Child Health",
+        "Infectious Diseases",
+        "Nutrition and Food Security",
+        "Health Expenditures",
+        "Population Health and Demographics",
+        "Mortality Rates"
+    ])
+    return page
+
+# Function to handle filters in the sidebar
 def sidebar_filters(health):
     st.sidebar.title("Health Data Filters")
 
@@ -61,23 +81,3 @@ def sidebar_filters(health):
     sort_order = st.sidebar.radio("Sort Year", ["Oldest to Newest", "Newest to Oldest"])
 
     return category, selected_indicators, year_range, sort_order, keyword_filter
-
-def show_sidebar():
-    st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Select a page", [
-        "About", 
-        "Overview Dashboard", 
-        "Trends Over Time", 
-        "Demographic Insights", 
-        "Expenditure Analysis", 
-        "Mortality & Morbidity", 
-        "Comparative Insights", 
-        "Key Indicator Highlights",
-        "Maternal and Child Health",
-        "Infectious Diseases",
-        "Nutrition and Food Security",
-        "Health Expenditures",
-        "Population Health and Demographics",
-        "Mortality Rates"
-    ])
-    return page
