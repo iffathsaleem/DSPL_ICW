@@ -46,8 +46,8 @@ def show_about():
     """)
 
     st.markdown("### Interactive Map of Sri Lanka")
-    df = pd.DataFrame({
+    health = pd.DataFrame({
         'latitude': [7.8731],
         'longitude': [80.7718]
     })
-    st.map(df)
+    st.map(health)

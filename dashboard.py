@@ -122,7 +122,7 @@ def set_background(image_url):
     """, unsafe_allow_html=True)
 
 # Show dashboard with selected category and filters
-def show_dashboard(df, category, selected_indicators, year_range, sort_order, keyword_filter):
+def show_dashboard(health, category, selected_indicators, year_range, sort_order, keyword_filter):
     set_sidebar_background(sidebar_image_url)
 
     image_url = background_images.get(category, None)
@@ -133,7 +133,7 @@ def show_dashboard(df, category, selected_indicators, year_range, sort_order, ke
     start_year, end_year = year_range
 
     # Filter by year
-    filtered = df[df['Year'].between(start_year, end_year)]
+    filtered = health[health['Year'].between(start_year, end_year)]
 
     # Sort order
     ascending = True if sort_order == "Oldest to Newest" else False
@@ -170,21 +170,21 @@ def show_dashboard(df, category, selected_indicators, year_range, sort_order, ke
         st.info("Select indicator(s) from the sidebar to view charts and data.")
 
 # Overview Dashboard
-def show_overview_dashboard(df):
+def show_overview_dashboard(health):
     st.title("Overview Dashboard")
 
     # Basic Stats
-    total_indicators = df['Indicator Name'].nunique()
-    total_records = len(df)
-    years_covered = df['Year'].nunique()
-    earliest_year = df['Year'].min()
-    latest_year = df['Year'].max()
-    avg_value = df['Value'].mean()
+    total_indicators = health['Indicator Name'].nunique()
+    total_records = len(health)
+    years_covered = health['Year'].nunique()
+    earliest_year = health['Year'].min()
+    latest_year = health['Year'].max()
+    avg_value = health['Value'].mean()
 
-    most_frequent_indicator = df['Indicator Name'].value_counts().idxmax()
-    top_avg_indicator = df.groupby('Indicator Name')['Value'].mean().idxmax()
-    max_value_row = df.loc[df['Value'].idxmax()]
-    min_value_row = df.loc[df['Value'].idxmin()]
+    most_frequent_indicator = health['Indicator Name'].value_counts().idxmax()
+    top_avg_indicator = health.groupby('Indicator Name')['Value'].mean().idxmax()
+    max_value_row = health.loc[health['Value'].idxmax()]
+    min_value_row = health.loc[health['Value'].idxmin()]
 
     st.subheader("Key Statistics")
     st.markdown(f"- Total Records: {total_records}")
@@ -198,7 +198,7 @@ def show_overview_dashboard(df):
 
     # CSV Data Preview
     st.subheader("Full Dataset")
-    st.dataframe(df)
+    st.dataframe(health)
 
     # Indicator Groups
     st.subheader("Indicator Groupings")
@@ -208,38 +208,38 @@ def show_overview_dashboard(df):
 
     # Bar Chart of Indicator Frequency (using Indicator Code)
     st.subheader("Indicator Frequency by Code")
-    freq_df = df['Indicator_Code'].value_counts().reset_index()
-    freq_df.columns = ['Indicator_Code', 'Count']
-    fig_bar = px.bar(freq_df, x='Indicator_Code', y='Count', title="Frequency of Each Indicator (Code)")
+    freq_health = health['Indicator_Code'].value_counts().reset_index()
+    freq_health.columns = ['Indicator_Code', 'Count']
+    fig_bar = px.bar(freq_health, x='Indicator_Code', y='Count', title="Frequency of Each Indicator (Code)")
     st.plotly_chart(fig_bar)
 
     # Code-to-Name Legend Table
     st.markdown("**Indicator Code Reference Table**")
-    code_name_df = df[['Indicator_Code', 'Indicator Name']].drop_duplicates().sort_values('Indicator_Code')
-    st.dataframe(code_name_df)
+    code_name_health = health[['Indicator_Code', 'Indicator Name']].drop_duplicates().sort_values('Indicator_Code')
+    st.dataframe(code_name_health)
 
     # Line Chart of Total Values Over Time
     st.subheader("Total Indicator Values Over Time")
-    trend_df = df.groupby('Year')['Value'].sum().reset_index()
-    fig_line = px.line(trend_df, x='Year', y='Value', title="Trend of Total Indicator Values Over Time")
+    trend_health = health.groupby('Year')['Value'].sum().reset_index()
+    fig_line = px.line(trend_health, x='Year', y='Value', title="Trend of Total Indicator Values Over Time")
     st.plotly_chart(fig_line)
 
     # Histogram of Value Distribution
     st.subheader("Distribution of Indicator Values")
-    fig_hist = px.histogram(df, x='Value', nbins=50, title="Distribution of All Indicator Values")
+    fig_hist = px.histogram(health, x='Value', nbins=50, title="Distribution of All Indicator Values")
     st.plotly_chart(fig_hist)
 
     # Heatmap of Indicator Counts per Year (using Code)
     st.subheader("Indicator Presence Heatmap (by Code and Year)")
-    heatmap_data = df.groupby(['Year', 'Indicator_Code']).size().unstack(fill_value=0)
+    heatmap_data = health.groupby(['Year', 'Indicator_Code']).size().unstack(fill_value=0)
     fig_heat = px.imshow(heatmap_data.T, aspect='auto', title="Indicator Presence Over Years (by Code)")
     st.plotly_chart(fig_heat)
 
     # Donut Chart of Indicator Counts by Category
     st.subheader("Indicator Count by Category")
     category_counts = {cat: len(indicators) for cat, indicators in categories.items()}
-    category_df = pd.DataFrame(list(category_counts.items()), columns=["Category", "Count"])
-    fig_donut = px.pie(category_df, names="Category", values="Count", hole=0.5, title="Indicator Distribution by Category")
+    category_health = pd.DataFrame(list(category_counts.items()), columns=["Category", "Count"])
+    fig_donut = px.pie(category_health, names="Category", values="Count", hole=0.5, title="Indicator Distribution by Category")
     st.plotly_chart(fig_donut)
 
 
@@ -270,19 +270,19 @@ def show_trends_over_time(data, selected_indicators):
     st.plotly_chart(fig_line)
 
 # Comparative Insights
-def show_comparative_insights(df):
+def show_comparative_insights(health):
     st.title("Comparative Insights")
     
-    comparison_indicators = df[df['Indicator Name'].str.contains("comparison", case=False)]
+    comparison_indicators = health[health['Indicator Name'].str.contains("comparison", case=False)]
     
     st.write("Indicators for Comparative Insights:")
     st.dataframe(comparison_indicators)
 
-def show_key_indicator_highlights(df):
+def show_key_indicator_highlights(health):
     st.title("Key Indicator Highlights")
     
     # List of all indicators
-    all_indicators = df['Indicator Name'].unique().tolist()
+    all_indicators = health['Indicator Name'].unique().tolist()
     
     # Let the user select the indicators they want to highlight
     selected_indicators = st.multiselect(
@@ -290,7 +290,7 @@ def show_key_indicator_highlights(df):
     )
     
     # Filter data based on selected indicators
-    selected_data = df[df['Indicator Name'].isin(selected_indicators)]
+    selected_data = health[health['Indicator Name'].isin(selected_indicators)]
     
     # Show the filtered data
     if not selected_data.empty:
@@ -301,11 +301,11 @@ def show_key_indicator_highlights(df):
 
 
 # Demographic Insights
-def show_demographic_insights(df):
+def show_demographic_insights(health):
     st.title("Demographic Insights")
-    female_indicators = df[df['Indicator Name'].str.contains("female", case=False)]
-    male_indicators = df[df['Indicator Name'].str.contains("male", case=False)]
-    children_indicators = df[df['Indicator Name'].str.contains("children", case=False)]
+    female_indicators = health[health['Indicator Name'].str.contains("female", case=False)]
+    male_indicators = health[health['Indicator Name'].str.contains("male", case=False)]
+    children_indicators = health[health['Indicator Name'].str.contains("children", case=False)]
 
     st.write("Indicators for Female:")
     st.dataframe(female_indicators)
@@ -315,15 +315,70 @@ def show_demographic_insights(df):
     st.dataframe(children_indicators)
 
 # Expenditure Analysis
-def show_expenditure_analysis(df):
+def show_expenditure_analysis(health):
     st.title("Expenditure Analysis")
-    expenditure_indicators = df[df['Indicator Name'].str.contains("expenditure", case=False)]
+    expenditure_indicators = health[health['Indicator Name'].str.contains("expenditure", case=False)]
     st.write("Indicators related to Health Expenditure:")
     st.dataframe(expenditure_indicators)
 
 # Mortality Trends
-def show_mortality_trends(df):
+def show_mortality_trends(health):
     st.title("Mortality Trends")
-    mortality_indicators = df[df['Indicator Name'].str.contains("mortality", case=False)]
+    mortality_indicators = health[health['Indicator Name'].str.contains("mortality", case=False)]
     st.write("Indicators related to Mortality:")
     st.dataframe(mortality_indicators)
+
+def show_maternal_and_child_health_section(health):
+    show_category_section(health, "Maternal and Child Health", categories["Maternal and Child Health"])
+
+def show_infectious_diseases_section(health):
+    show_category_section(health, "Infectious Diseases", categories["Infectious Diseases"])
+
+def show_nutrition_and_food_security_section(health):
+    show_category_section(health, "Nutrition and Food Security", categories["Nutrition and Food Security"])
+
+def show_health_expenditures_section(health):
+    show_category_section(health, "Health Expenditures", categories["Health Expenditures"])
+
+def show_population_health_and_demographics_section(health):
+    show_category_section(health, "Population Health and Demographics", categories["Population Health and Demographics"])
+
+def show_mortality_rates_section(health):
+    show_category_section(health, "Mortality Rates", categories["Mortality Rates"])
+
+# Show category section (pie charts)
+def show_pie_chart_by_category(health, category_name):
+    st.header(f"{category_name} Breakdown")
+    
+    filtered_health = health[health["Indicator Name"].str.contains(category_name, case=False, na=False)]
+    
+    if not filtered_health.empty:
+        fig = px.pie(
+            filtered_health,
+            names='Indicator Name',
+            values='Value',
+            title=f"{category_name} Indicator Contribution",
+            hole=0.4  # donut style
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.warning(f"No data available for {category_name} indicators.")
+
+# Individual functions for each category
+def show_maternal_child_piecharts(health):
+    show_pie_chart_by_category(health, "Maternal and Child Health")
+
+def show_infectious_diseases_piecharts(health):
+    show_pie_chart_by_category(health, "Infectious Diseases")
+
+def show_nutrition_foodsecurity_piecharts(health):
+    show_pie_chart_by_category(health, "Nutrition and Food Security")
+
+def show_expenditure_piecharts(health):
+    show_pie_chart_by_category(health, "Health Expenditures")
+
+def show_population_piecharts(health):
+    show_pie_chart_by_category(health, "Population Health and Demographics")
+
+def show_mortality_piecharts(health):
+    show_pie_chart_by_category(health, "Mortality Rates")

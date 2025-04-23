@@ -53,7 +53,7 @@ if 'background_image_set' not in st.session_state:
     set_sidebar_background(background_image_url)
     st.session_state.background_image_set = True  
 
-def sidebar_filters(df):
+def sidebar_filters(health):
     st.sidebar.title("Health Data Filters")
 
     # Define the categories and their associated indicators
@@ -116,7 +116,7 @@ def sidebar_filters(df):
     selected_indicators = st.sidebar.multiselect("Select Indicator(s)", indicators)
 
     # Handle year selection
-    years = sorted(df['Year'].dropna().unique())
+    years = sorted(health['Year'].dropna().unique())
     year_range = st.sidebar.slider("Select Year Range", int(min(years)), int(max(years)),
                                    (int(min(years)), int(max(years))))
 
@@ -136,6 +136,13 @@ def show_sidebar():
         "Expenditure Analysis", 
         "Mortality & Morbidity", 
         "Comparative Insights", 
-        "Key Indicator Highlights"
+        "Key Indicator Highlights",
+        "Maternal and Child Health",
+        "Infectious Diseases",
+        "Nutrition and Food Security",
+        "Health Expenditures",
+        "Population Health and Demographics",
+        "Mortality Rates"
+
     ])
     return page
