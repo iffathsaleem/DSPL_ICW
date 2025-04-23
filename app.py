@@ -7,7 +7,7 @@ from dashboard import show_overview_dashboard, show_trends_over_time, show_demog
                       show_maternal_child_piecharts, show_infectious_diseases_piecharts, \
                       show_nutrition_foodsecurity_piecharts, show_expenditure_piecharts, \
                       show_population_piecharts, show_mortality_piecharts
-from about import show_about
+from about import show_about,show_sri_lanka_map
 from categories import map_category  
 
 # Load health data
@@ -26,6 +26,7 @@ def main():
     # Display content based on selection
     if page == "About":
         show_about()
+        show_sri_lanka_map() 
     elif page == "Overview Dashboard":
         show_overview_dashboard(health)
     elif page == "Trends Over Time":

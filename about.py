@@ -48,14 +48,10 @@ def show_about():
     **Built for data-driven insights and public health understanding.**
     """)
 
+import streamlit as st
 import folium
 from streamlit_folium import st_folium
 
-st.markdown("### Map of Sri Lanka")
-
-# Create Folium map centered on Sri Lanka
-sri_lanka_coords = [7.8731, 80.7718]
-map_sri_lanka = folium.Map(location=sri_lanka_coords, zoom_start=7)
-
-# Display the map in Streamlit
-st_folium(map_sri_lanka, width=700, height=500)
+def show_sri_lanka_map():
+    st.markdown("### Map of Sri Lanka")
+    st.image("https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Map%20or%20Sri%20Lanka.png", use_column_width=True)
