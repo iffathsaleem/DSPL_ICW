@@ -137,6 +137,7 @@ def show_dashboard(health, category, selected_indicators, year_range, sort_order
 
 # Overview Dashboard
 def show_overview_dashboard(health):
+    set_background(background_images["Overview Dashboard"])
     st.title("Overview Dashboard")
 
     # Basic Stats
@@ -218,6 +219,7 @@ st.plotly_chart(fig_donut)
 
 # Trends Over Time
 def show_trends_over_time(data):
+    set_background(background_images["Trends Over Time"])
     st.title("Trends Over Time by Category")
 
     for category_name, indicators in categories.items():
@@ -255,6 +257,7 @@ def show_trends_over_time(data):
 
 # Comparative Insights
 def show_comparative_insights(health):
+    set_background(background_images["Comparative Insights"])
     st.title("Comparative Insights")
     
     # Line Chart for Life Expectancy at Birth (Female and Male)
@@ -300,6 +303,7 @@ def show_comparative_insights(health):
     
 
 def show_key_indicator_highlights(health):
+    set_background(background_images["Key Indicator Highlights"])
     st.title("Key Indicator Highlights")
     
     # List of all indicators
@@ -323,6 +327,7 @@ def show_key_indicator_highlights(health):
 
 # Demographic Insights
 def show_demographic_insights(health):
+    set_background(background_images["Demographic Insights"])
     st.title("Demographic Insights")
     female_indicators = health[health['Indicator Name'].str.contains("female", case=False)]
     male_indicators = health[health['Indicator Name'].str.contains("male", case=False)]
@@ -337,6 +342,7 @@ def show_demographic_insights(health):
 
 # Expenditure Analysis
 def show_expenditure_analysis(health):
+    set_background(background_images["Expenditure Analysis"])
     st.title("Expenditure Analysis")
     expenditure_indicators = health[health['Indicator Name'].str.contains("expenditure", case=False)]
     st.write("Indicators related to Health Expenditure:")
@@ -344,6 +350,7 @@ def show_expenditure_analysis(health):
 
 # Mortality Trends
 def show_mortality_trends(health):
+    set_background(background_images["Mortality & Morbidity"])
     st.title("Mortality Trends")
     
     # Get mortality indicators from categories.py
@@ -393,21 +400,26 @@ def show_pie_chart(data, category_name, relevant_indicators=None):
 
 # Usage for Maternal and Child Health
 def show_maternal_child_piecharts(data):
+    set_background(background_images["Maternal and Child Health"])
     show_pie_chart(data, 'Maternal and Child Health')
 
 # Usage for Infectious Diseases
 def show_infectious_diseases_piecharts(data):
+    set_background(background_images["Infectious Diseases"])
     show_pie_chart(data, 'Infectious Diseases')
 
 # Usage for Nutrition and Food Security
 def show_nutrition_foodsecurity_piecharts(data):
+    set_background(background_images["Nutrition and Food Security"])
     show_pie_chart(data, 'Nutrition and Food Security')
 
 # Usage for Health Expenditures
 def show_expenditure_piecharts(data):
+    set_background(background_images["Health Expenditures"])
     show_pie_chart(data, 'Health Expenditures')
 
 def show_population_piecharts(data):
+    set_background(background_images["Population Health and Demographics"])
     relevant_indicators = [
         "Life expectancy at birth, female (years)",
         "Life expectancy at birth, male (years)",
@@ -443,4 +455,5 @@ def show_population_piecharts(data):
 
 # Usage for Mortality Rates
 def show_mortality_piecharts(data):
+    set_background(background_images["Mortality Rates"])
     show_pie_chart(data, 'Mortality Rates')
