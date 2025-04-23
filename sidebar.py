@@ -38,7 +38,6 @@ def set_sidebar_background(image_url):
 
 # Function to display the sidebar and handle navigation
 def show_sidebar():
-    # Apply background image globally
     background_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Sidebar.png"
     set_sidebar_background(background_image_url)
 
@@ -61,11 +60,11 @@ def show_sidebar():
     ])
     return page
 
-# Function to handle filters in the sidebar
 def sidebar_filters(health):
     st.sidebar.title("Health Data Filters")
 
     category = st.sidebar.selectbox("Select Category", list(categories.keys()))
+    
     keyword_filter = st.sidebar.selectbox("Filter indicators by keyword", ["All", "kids", "female", "male"])
 
     indicators = categories[category]
@@ -74,10 +73,13 @@ def sidebar_filters(health):
 
     selected_indicators = st.sidebar.multiselect("Select Indicator(s)", indicators)
 
+    # Select year range for filtering data
     years = sorted(health['Year'].dropna().unique())
-    year_range = st.sidebar.slider("Select Year Range", int(min(years)), int(max(years)),
-                                   (int(min(years)), int(max(years))))
+    year_range = st.sidebar.slider("Select Year Range", 
+                                   int(min(years)), int(max(years)),
+                                   (int(min(years)), int(max(years))))  # Default year range
 
+    # Option to sort years
     sort_order = st.sidebar.radio("Sort Year", ["Oldest to Newest", "Newest to Oldest"])
 
     return category, selected_indicators, year_range, sort_order, keyword_filter

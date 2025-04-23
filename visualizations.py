@@ -39,17 +39,18 @@ def show_stacked_area_chart(health):
 
 # Bullet Graph
 def show_bullet_graph(health, indicator, target_value, year_range):
-    st.subheader("  Key Indicator - Bullet Graph")
+    st.subheader("Key Indicator - Bullet Graph")
 
     if not indicator:
         st.info("Please select an indicator from the sidebar to display the bullet graph.")
         return
 
+    # Ensure the 'Value' column is numeric
     health['Value'] = pd.to_numeric(health['Value'], errors='coerce')
 
-    # Filter by indicator and selected year range
+    # Filter the data for the selected indicator and year range
     indicator_data = health[
-        (health['Indicator Name'] == indicator) &
+        (health['Indicator Name'] == indicator) & 
         (health['Year'].between(year_range[0], year_range[1]))
     ].dropna(subset=['Value', 'Year'])
 
@@ -57,15 +58,17 @@ def show_bullet_graph(health, indicator, target_value, year_range):
         st.warning("No data available for the selected indicator and year range.")
         return
 
-    # Group by year and get the mean value
+    # Group the data by year and calculate the mean value for each year
     indicator_data = indicator_data.groupby('Year', as_index=False)['Value'].mean()
 
     for _, row in indicator_data.iterrows():
         actual = row['Value']
         year = row['Year']
 
+        # Create the figure for each year
         fig = go.Figure()
 
+        # Target Bar
         fig.add_trace(go.Bar(
             x=[target_value],
             y=[str(year)],
@@ -75,6 +78,7 @@ def show_bullet_graph(health, indicator, target_value, year_range):
             hoverinfo='skip'
         ))
 
+        # Actual Bar
         fig.add_trace(go.Bar(
             x=[actual],
             y=[str(year)],
@@ -83,6 +87,7 @@ def show_bullet_graph(health, indicator, target_value, year_range):
             name='Actual'
         ))
 
+        # Target Marker
         fig.add_trace(go.Scatter(
             x=[target_value],
             y=[str(year)],
@@ -91,6 +96,7 @@ def show_bullet_graph(health, indicator, target_value, year_range):
             name='Target Marker'
         ))
 
+        # Layout settings for the graph
         fig.update_layout(
             barmode='overlay',
             title=f"{indicator} ({int(year)})",

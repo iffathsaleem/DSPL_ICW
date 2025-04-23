@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 from sidebar import sidebar_filters
 from categories import categories, map_category
+from visualizations import show_bullet_graph
 
 health = pd.read_csv("Sri Lanka Health Statistics.csv")
 
@@ -305,25 +306,40 @@ def show_comparative_insights(health):
 def show_key_indicator_highlights(health):
     set_background(background_images["Key Indicator Highlights"])
     st.title("Key Indicator Highlights")
-    
-    # List of all indicators
-    all_indicators = health['Indicator Name'].unique().tolist()
-    
-    # Let the user select the indicators they want to highlight
-    selected_indicators = st.multiselect(
-        "Select Key Indicators to Highlight", all_indicators, default=all_indicators[:5]
-    )
-    
-    # Filter data based on selected indicators
-    selected_data = health[health['Indicator Name'].isin(selected_indicators)]
-    
-    # Show the filtered data
-    if not selected_data.empty:
-        st.write(f"Showing selected key health indicators:")
-        st.dataframe(selected_data)
-    else:
-        st.info("No indicators selected. Please select indicators to display.")
 
+    all_indicators = health['Indicator Name'].unique().tolist()
+
+    selected_indicators = st.multiselect(
+        "Select Key Indicators to Highlight",
+        options=all_indicators,
+        default=all_indicators[:5]
+    )
+
+    if not selected_indicators:
+        st.info("Please select at least one indicator to view highlights and bullet graphs.")
+        return
+
+    year_range = st.slider(
+    "Select Year Range",
+    min_value=int(health['Year'].min()),
+    max_value=int(health['Year'].max()),
+    value=(int(health['Year'].min()), int(health['Year'].max())),
+    step=1,
+    key="year_slider"  # Make sure this key is unique
+)
+
+    selected_data = health[
+        (health['Indicator Name'].isin(selected_indicators)) &
+        (health['Year'].between(year_range[0], year_range[1]))
+    ]
+
+    st.write("Displaying data and bullet graphs for selected key health indicators:")
+    st.dataframe(selected_data)
+
+    target_value = 75
+
+    for indicator in selected_indicators:
+        show_bullet_graph(health, indicator, target_value, year_range)
 
 # Demographic Insights
 def show_demographic_insights(health):
