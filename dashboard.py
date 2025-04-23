@@ -172,19 +172,76 @@ def show_dashboard(df, category, selected_indicators, year_range, sort_order, ke
 # Overview Dashboard
 def show_overview_dashboard(df):
     st.title("Overview Dashboard")
+
+    # Basic Stats
     total_indicators = df['Indicator Name'].nunique()
+    total_records = len(df)
+    years_covered = df['Year'].nunique()
+    earliest_year = df['Year'].min()
     latest_year = df['Year'].max()
     avg_value = df['Value'].mean()
-    st.write(f"Total Number of Indicators: {total_indicators}")
-    st.write(f"Latest Data Year: {latest_year}")
-    st.write(f"Average Value across all Indicators: {avg_value:.2f}")
 
-    # Display indicator groups
-    st.markdown("### Indicator Groupings")
+    most_frequent_indicator = df['Indicator Name'].value_counts().idxmax()
+    top_avg_indicator = df.groupby('Indicator Name')['Value'].mean().idxmax()
+    max_value_row = df.loc[df['Value'].idxmax()]
+    min_value_row = df.loc[df['Value'].idxmin()]
+
+    st.subheader("Key Statistics")
+    st.markdown(f"- Total Records: {total_records}")
+    st.markdown(f"- Number of Unique Indicators: {total_indicators}")
+    st.markdown(f"- Years Covered: {years_covered} ({earliest_year} to {latest_year})")
+    st.markdown(f"- Average Value Across All Indicators: {avg_value:.2f}")
+    st.markdown(f"- Most Frequent Indicator: {most_frequent_indicator}")
+    st.markdown(f"- Top Indicator by Average Value: {top_avg_indicator}")
+    st.markdown(f"- Highest Value: {max_value_row['Value']} ({max_value_row['Indicator Name']} in {max_value_row['Year']})")
+    st.markdown(f"- Lowest Value: {min_value_row['Value']} ({min_value_row['Indicator Name']} in {min_value_row['Year']})")
+
+    # CSV Data Preview
+    st.subheader("Full Dataset")
+    st.dataframe(df)
+
+    # Indicator Groups
+    st.subheader("Indicator Groupings")
     for group, indicators in categories.items():
-        st.subheader(group)
-        st.markdown(", ".join(indicators))  # List the indicators for the group
-        st.markdown("---")
+        st.markdown(f"**{group}**")
+        st.markdown("• " + "<br>• ".join(indicators), unsafe_allow_html=True)
+
+    # Bar Chart of Indicator Frequency (using Indicator Code)
+    st.subheader("Indicator Frequency by Code")
+    freq_df = df['Indicator_Code'].value_counts().reset_index()
+    freq_df.columns = ['Indicator_Code', 'Count']
+    fig_bar = px.bar(freq_df, x='Indicator_Code', y='Count', title="Frequency of Each Indicator (Code)")
+    st.plotly_chart(fig_bar)
+
+    # Code-to-Name Legend Table
+    st.markdown("**Indicator Code Reference Table**")
+    code_name_df = df[['Indicator_Code', 'Indicator Name']].drop_duplicates().sort_values('Indicator_Code')
+    st.dataframe(code_name_df)
+
+    # Line Chart of Total Values Over Time
+    st.subheader("Total Indicator Values Over Time")
+    trend_df = df.groupby('Year')['Value'].sum().reset_index()
+    fig_line = px.line(trend_df, x='Year', y='Value', title="Trend of Total Indicator Values Over Time")
+    st.plotly_chart(fig_line)
+
+    # Histogram of Value Distribution
+    st.subheader("Distribution of Indicator Values")
+    fig_hist = px.histogram(df, x='Value', nbins=50, title="Distribution of All Indicator Values")
+    st.plotly_chart(fig_hist)
+
+    # Heatmap of Indicator Counts per Year (using Code)
+    st.subheader("Indicator Presence Heatmap (by Code and Year)")
+    heatmap_data = df.groupby(['Year', 'Indicator_Code']).size().unstack(fill_value=0)
+    fig_heat = px.imshow(heatmap_data.T, aspect='auto', title="Indicator Presence Over Years (by Code)")
+    st.plotly_chart(fig_heat)
+
+    # Donut Chart of Indicator Counts by Category
+    st.subheader("Indicator Count by Category")
+    category_counts = {cat: len(indicators) for cat, indicators in categories.items()}
+    category_df = pd.DataFrame(list(category_counts.items()), columns=["Category", "Count"])
+    fig_donut = px.pie(category_df, names="Category", values="Count", hole=0.5, title="Indicator Distribution by Category")
+    st.plotly_chart(fig_donut)
+
 
 # Trends Over Time
 def show_trends_over_time(data, selected_indicators):
