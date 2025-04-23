@@ -48,9 +48,6 @@ def show_about():
     **Built for data-driven insights and public health understanding.**
     """)
 
-import streamlit as st
-import folium
-from streamlit_folium import st_folium
 
 def show_sri_lanka_map():
     st.markdown("### Map of Sri Lanka")
