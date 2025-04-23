@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 def show_about():
-    bg_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/public-service-img-new1-scaled.jpg"
+    bg_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/About.jpg"
 
     # Add background and dark overlay
     st.markdown(
@@ -48,9 +48,14 @@ def show_about():
     **Built for data-driven insights and public health understanding.**
     """)
 
-    st.markdown("### Interactive Map of Sri Lanka")
-    health = pd.DataFrame({
-        'latitude': [7.8731],
-        'longitude': [80.7718]
-    })
-    st.map(health)
+import folium
+from streamlit_folium import st_folium
+
+st.markdown("### Map of Sri Lanka")
+
+# Create Folium map centered on Sri Lanka
+sri_lanka_coords = [7.8731, 80.7718]
+map_sri_lanka = folium.Map(location=sri_lanka_coords, zoom_start=7)
+
+# Display the map in Streamlit
+st_folium(map_sri_lanka, width=700, height=500)

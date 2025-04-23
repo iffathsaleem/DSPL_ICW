@@ -36,7 +36,7 @@ def set_sidebar_background(image_url):
         </style>
     """, unsafe_allow_html=True)
 
-background_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/png-transparent-medicine-health-care-logo-health-love-text-heart-thumbnail.png"
+background_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Sidebar.png"
 
 if 'background_image_set' not in st.session_state:
     set_sidebar_background(background_image_url)
