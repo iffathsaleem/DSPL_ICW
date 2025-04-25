@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 from categories import categories, map_category
-from visualizations import show_trend_chart
 
-# Background image configuration (renamed Overview)
+# Background image configuration
 background_images = {
     "About": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/About.jpg",
     "Overview": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Overview.jpg",
@@ -82,7 +82,42 @@ def initialize_page(category):
     set_sidebar_background(sidebar_image_url)
     st.title(f"{category}")
 
-import plotly.express as px
+def show_animated_chart(data, title):
+    """Display an animated chart of indicators over time"""
+    try:
+        fig = px.scatter(
+            data.sort_values('Year'),
+            x='Year',
+            y='Value',
+            color='Indicator Name',
+            animation_frame='Year',
+            title=title,
+            labels={'Value': 'Value', 'Year': 'Year'},
+            height=600
+        )
+        
+        fig.update_layout(
+            xaxis_range=[data['Year'].min()-1, data['Year'].max()+1],
+            yaxis_range=[data['Value'].min()*0.9, data['Value'].max()*1.1],
+            transition={'duration': 300},
+            updatemenus=[{
+                "buttons": [{
+                    "args": [None, {"frame": {"duration": 500, "redraw": True},
+                                "fromcurrent": True, "transition": {"duration": 300}}],
+                    "label": "Play",
+                    "method": "animate"
+                }],
+                "direction": "left",
+                "pad": {"r": 10, "t": 87},
+                "type": "buttons",
+                "x": 0.1,
+                "y": 0
+            }]
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception as e:
+        st.error(f"Animation error: {str(e)}")
+        st.dataframe(data)
 
 def show_overview(health_data):
     initialize_page("Overview")
@@ -99,86 +134,34 @@ def show_overview(health_data):
         st.metric("Average Value", f"{health_data['Value'].mean():.2f}")
         st.metric("Data Points", len(health_data))
 
-    # Animated visualization
+    # Show animated chart for all data
     st.subheader("Animated Trends for All Indicators")
+    show_animated_chart(health_data, "Health Indicators Over Time")
+
+def show_category_analysis(data, category_name):
+    initialize_page(category_name)
+    indicators = categories.get(category_name, [])
     
-    try:
-        # Create a sample of data if dataset is too large
-        if len(health_data) > 1000:
-            sample_data = health_data.sample(1000)
-            st.warning("Showing random sample of 1000 points for better performance")
-        else:
-            sample_data = health_data
-            
-        fig = px.scatter(
-            sample_data.sort_values('Year'),
-            x='Year',
-            y='Value',
-            color='Indicator Name',
-            animation_frame='Year',
-            title='Health Indicators Over Time',
-            labels={'Value': 'Value', 'Year': 'Year'},
-            height=600
-        )
-        
-        fig.update_layout(
-            xaxis_range=[sample_data['Year'].min()-1, sample_data['Year'].max()+1],
-            yaxis_range=[sample_data['Value'].min()*0.9, sample_data['Value'].max()*1.1],
-            transition={'duration': 300}
-        )
-        
-        # Add play button
-        fig.update_layout(
-            updatemenus=[{
-                "buttons": [
-                    {
-                        "args": [None, {"frame": {"duration": 500, "redraw": True},
-                                    "fromcurrent": True, "transition": {"duration": 300}}],
-                        "label": "Play",
-                        "method": "animate"
-                    }
-                ],
-                "direction": "left",
-                "pad": {"r": 10, "t": 87},
-                "showactive": False,
-                "type": "buttons",
-                "x": 0.1,
-                "xanchor": "right",
-                "y": 0,
-                "yanchor": "top"
-            }]
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
-        
-    except Exception as e:
-        st.error(f"Animation failed: {str(e)}")
-        st.write("Showing static visualization instead")
-        st.dataframe(health_data)
+    if not indicators:
+        st.warning("No indicators defined for this category")
+        return
+    
+    category_data = data[data['Indicator Name'].isin(indicators)]
+    
+    if not category_data.empty:
+        show_animated_chart(category_data, f"{category_name} Trends")
+    else:
+        st.warning("No data available for selected indicators")
 
-def show_demographic_and_population_insights(data):
-    show_category_analysis(data, "Demographic and Population Insights")
-
-def show_health_expenditure_insights(data):
-    show_category_analysis(data, "Health Expenditure Insights")
-
-def show_mortality_and_morbidity_trends(data):
-    show_category_analysis(data, "Mortality and Morbidity Trends")
-
-def show_comparative_insights(data):
-    show_category_analysis(data, "Comparative Insights")
-
-def show_key_indicator_highlights(data):
-    show_category_analysis(data, "Key Indicator Highlights")
-
-def show_maternal_child_piecharts(data):
-    show_category_analysis(data, "Maternal and Child Health")
-
-def show_infectious_diseases_piecharts(data):
-    show_category_analysis(data, "Infectious Diseases")
-
-def show_nutrition_foodsecurity_piecharts(data):
-    show_category_analysis(data, "Nutrition and Food Security")
+# Category-specific functions (all using show_category_analysis)
+def show_demographic_and_population_insights(data): show_category_analysis(data, "Demographic and Population Insights")
+def show_health_expenditure_insights(data): show_category_analysis(data, "Health Expenditure Insights")
+def show_mortality_and_morbidity_trends(data): show_category_analysis(data, "Mortality and Morbidity Trends")
+def show_comparative_insights(data): show_category_analysis(data, "Comparative Insights")
+def show_key_indicator_highlights(data): show_category_analysis(data, "Key Indicator Highlights")
+def show_maternal_child_piecharts(data): show_category_analysis(data, "Maternal and Child Health")
+def show_infectious_diseases_piecharts(data): show_category_analysis(data, "Infectious Diseases")
+def show_nutrition_foodsecurity_piecharts(data): show_category_analysis(data, "Nutrition and Food Security")
 
 def prepare_dashboard_data(health, category, selected_indicators, year_range, sort_order, keyword_filter):
     set_sidebar_background(sidebar_image_url)
