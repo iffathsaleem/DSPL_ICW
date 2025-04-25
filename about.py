@@ -1,10 +1,8 @@
 import streamlit as st
-import pandas as pd
 
 def show_about():
     bg_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/About.jpg"
 
-    # Add background and dark overlay
     st.markdown(
         f"""
         <style>
@@ -22,6 +20,9 @@ def show_about():
         .block-container {{
             background-color: rgba(0, 0, 0, 0);
         }}
+        h1, h2, h3, h4, h5, h6 {{
+            color: white !important;
+        }}
         </style>
         """,
         unsafe_allow_html=True
@@ -29,26 +30,30 @@ def show_about():
 
     st.title("About This Dashboard")
     st.markdown("""
-    Welcome to the **Sri Lanka Health Insights Dashboard**.  
-    This platform visualizes national health data from **1960 to 2023**, offering insights across:
+    ## Sri Lanka Health Insights Dashboard
 
+    This interactive dashboard provides comprehensive visualization of national health indicators from 1960 to 2023.
+
+    ### Key Focus Areas:
     - Maternal and child health  
     - Infectious diseases and immunization  
     - Nutrition and food security  
-    - Health expenditure  
+    - Health expenditure analysis  
     - Population demographics  
-    - Mortality and life expectancy  
+    - Mortality and life expectancy trends  
 
-    ### Features:
-    - Interactive charts and visual breakdowns  
-    - Keyword + category filtering (e.g., “female”, “kids”)  
-    - Time-range comparisons  
-    - Pie, line, and bar visualizations  
+    ### Main Features:
+    - Interactive charts and visualizations  
+    - Advanced filtering by category and keywords  
+    - Time-series analysis across decades  
+    - Key performance indicators tracking  
+    - Comparative insights across indicators  
 
-    **Built for data-driven insights and public health understanding.**
+    Data Sources: World Bank, Sri Lanka Health Ministry, and WHO datasets.
     """)
 
-
 def show_sri_lanka_map():
-    st.markdown("### Map of Sri Lanka")
-    st.image("https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Map%20or%20Sri%20Lanka.png", use_column_width=True)
+    st.markdown("### Geographic Context")
+    st.image("https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Map%20or%20Sri%20Lanka.png", 
+            use_column_width=True)
+    st.markdown("The map provides geographic reference for regional health variations across Sri Lanka.")

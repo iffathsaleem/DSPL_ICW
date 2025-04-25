@@ -1,42 +1,6 @@
 import streamlit as st
-from categories import categories
+from dashboard import set_sidebar_background
 
-# Function to set sidebar background
-def set_sidebar_background(image_url):
-    st.markdown(f"""
-        <style>
-        [data-testid="stSidebar"]::before {{
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url('{image_url}');
-            background-size: cover;
-            background-position: center;
-            opacity: 0.3;
-            z-index: 0;
-        }}
-        [data-testid="stSidebar"]::after {{
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.7);
-            z-index: 1;
-        }}
-        [data-testid="stSidebar"] * {{
-            position: relative;
-            z-index: 2;
-            color: black !important;
-        }}
-        </style>
-    """, unsafe_allow_html=True)
-
-# Function to display the sidebar and handle navigation
 def show_sidebar():
     background_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Sidebar.png"
     set_sidebar_background(background_image_url)
@@ -45,41 +9,58 @@ def show_sidebar():
     page = st.sidebar.radio("Select a page", [
         "About", 
         "Overview Dashboard", 
-        "Trends Over Time", 
-        "Demographic Insights", 
-        "Expenditure Analysis", 
-        "Mortality & Morbidity", 
+        "Trends Over Time",
+        "Demographic and Population Insights",
+        "Health Expenditure Insights", 
+        "Mortality and Morbidity Trends", 
         "Comparative Insights", 
         "Key Indicator Highlights",
         "Maternal and Child Health",
         "Infectious Diseases",
-        "Nutrition and Food Security",
-        "Health Expenditures",
-        "Population Health and Demographics",
-        "Mortality Rates"
+        "Nutrition and Food Security"
     ])
     return page
 
 def sidebar_filters(health):
-    st.sidebar.title("Health Data Filters")
-
-    category = st.sidebar.selectbox("Select Category", list(categories.keys()))
+    st.sidebar.title("Data Filters")
     
-    keyword_filter = st.sidebar.selectbox("Filter indicators by keyword", ["All", "kids", "female", "male"])
+    if 'Category' in health.columns:
+        available_categories = health['Category'].unique()
+        category = st.sidebar.selectbox("Select Category", available_categories)
+    else:
+        category = st.sidebar.selectbox("Select Category", ["Overview"])
+    
+    keyword_filter = st.sidebar.selectbox(
+        "Filter by keyword", 
+        ["All", "kids", "female", "male", "child", "birth", "mortality"]
+    )
 
-    indicators = categories[category]
+    if 'Category' in health.columns:
+        indicators = health[health['Category'] == category]['Indicator Name'].unique()
+    else:
+        indicators = []
+        
     if keyword_filter != "All":
         indicators = [i for i in indicators if keyword_filter.lower() in i.lower()]
 
-    selected_indicators = st.sidebar.multiselect("Select Indicator(s)", indicators)
+    selected_indicators = st.sidebar.multiselect(
+        "Select Indicators", 
+        indicators,
+        max_selections=5
+    )
 
-    # Select year range for filtering data
     years = sorted(health['Year'].dropna().unique())
-    year_range = st.sidebar.slider("Select Year Range", 
-                                   int(min(years)), int(max(years)),
-                                   (int(min(years)), int(max(years))))  # Default year range
-
-    # Option to sort years
-    sort_order = st.sidebar.radio("Sort Year", ["Oldest to Newest", "Newest to Oldest"])
+    year_range = st.sidebar.slider(
+        "Year Range", 
+        int(min(years)), 
+        int(max(years)),
+        (int(min(years)), int(max(years)))
+    )
+    
+    sort_order = st.sidebar.radio(
+        "Sort Order", 
+        ["Oldest to Newest", "Newest to Oldest"],
+        horizontal=True
+    )
 
     return category, selected_indicators, year_range, sort_order, keyword_filter
