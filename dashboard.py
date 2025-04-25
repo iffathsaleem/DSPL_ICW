@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from categories import categories, map_category
 from visualizations import show_trend_chart
+import plotly.express as px
 
 # Background image configuration (renamed Overview)
 background_images = {
@@ -97,13 +98,32 @@ def show_overview(health_data):
         st.metric("Average Value", f"{health_data['Value'].mean():.2f}")
         st.metric("Data Points", len(health_data))
 
-    # Show trend charts for each category
-    st.subheader("Category Trends Over Time")
+    # Show animated trend charts for each category
+    st.subheader("Animated Category Trends Over Time")
     
     for category, indicators in categories.items():
         with st.expander(f"{category} Trends"):
             category_data = health_data[health_data['Indicator Name'].isin(indicators)]
             if not category_data.empty:
+                # Create animated chart
+                fig = px.line(
+                    category_data.sort_values('Year'),
+                    x='Year',
+                    y='Value',
+                    color='Indicator Name',
+                    animation_frame='Year',
+                    title=f"{category} Trends Over Time",
+                    labels={'Value': 'Value', 'Year': 'Year'},
+                    height=500
+                )
+                fig.update_layout(
+                    xaxis_range=[category_data['Year'].min(), category_data['Year'].max()],
+                    yaxis_range=[category_data['Value'].min()*0.9, category_data['Value'].max()*1.1],
+                    transition={'duration': 500}
+                )
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Also show the static trend chart for reference
                 show_trend_chart(category_data, f"{category} Trends", indicators)
             else:
                 st.warning(f"No data available for {category}")
