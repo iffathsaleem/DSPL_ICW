@@ -82,31 +82,55 @@ def initialize_page(category):
     set_sidebar_background(sidebar_image_url)
     st.title(f"{category}")
 
-def show_animated_chart(data, title):
-    """Display an animated chart of indicators over time"""
+def show_animated_line_chart(data, title):
+    """Display a properly animated line chart with all category indicators"""
+    if data.empty:
+        st.warning(f"No data available for {title}")
+        return
+    
     try:
-        fig = px.scatter(
-            data.sort_values('Year'),
+        # Ensure numeric data type and handle missing values
+        data['Value'] = pd.to_numeric(data['Value'], errors='coerce')
+        data = data.dropna(subset=['Value'])
+        
+        # Prepare complete time series for each indicator
+        complete_data = (data.groupby(['Indicator Name', 'Year'])['Value']
+                        .mean()  # Aggregate if multiple values per year
+                        .reset_index())
+        
+        fig = px.line(
+            complete_data,
             x='Year',
             y='Value',
             color='Indicator Name',
-            animation_frame='Year',
             title=title,
             labels={'Value': 'Value', 'Year': 'Year'},
-            height=600
+            height=500,
+            line_shape='linear',
+            animation_frame='Year',
+            range_x=[complete_data['Year'].min()-1, complete_data['Year'].max()+1],
+            range_y=[complete_data['Value'].min()*0.9, complete_data['Value'].max()*1.1]
         )
         
+        # Configure animation
         fig.update_layout(
-            xaxis_range=[data['Year'].min()-1, data['Year'].max()+1],
-            yaxis_range=[data['Value'].min()*0.9, data['Value'].max()*1.1],
             transition={'duration': 300},
             updatemenus=[{
-                "buttons": [{
-                    "args": [None, {"frame": {"duration": 500, "redraw": True},
-                                "fromcurrent": True, "transition": {"duration": 300}}],
-                    "label": "Play",
-                    "method": "animate"
-                }],
+                "buttons": [
+                    {
+                        "args": [None, {"frame": {"duration": 500, "redraw": True},
+                                      "fromcurrent": True, "transition": {"duration": 300}}],
+                        "label": "▶ Play",
+                        "method": "animate"
+                    },
+                    {
+                        "args": [[None], {"frame": {"duration": 0, "redraw": False},
+                                        "mode": "immediate",
+                                        "transition": {"duration": 0}}],
+                        "label": "❚❚ Pause",
+                        "method": "animate"
+                    }
+                ],
                 "direction": "left",
                 "pad": {"r": 10, "t": 87},
                 "type": "buttons",
@@ -114,7 +138,12 @@ def show_animated_chart(data, title):
                 "y": 0
             }]
         )
+        
+        # Remove duplicate controls
+        fig.layout.pop('sliders', None)
+        
         st.plotly_chart(fig, use_container_width=True)
+        
     except Exception as e:
         st.error(f"Animation error: {str(e)}")
         st.dataframe(data)
@@ -131,12 +160,26 @@ def show_overview(health_data):
     
     with col2:
         st.subheader("Value Statistics")
+        health_data['Value'] = pd.to_numeric(health_data['Value'], errors='coerce')
         st.metric("Average Value", f"{health_data['Value'].mean():.2f}")
-        st.metric("Data Points", len(health_data))
+        st.metric("Data Points", len(health_data.dropna(subset=['Value'])))
 
-    # Show animated chart for all data
-    st.subheader("Animated Trends for All Indicators")
-    show_animated_chart(health_data, "Health Indicators Over Time")
+    # Show animated charts for each category
+    st.subheader("Category Trends Animation")
+    
+    for category, indicators in list(categories.items())[:6]:  # First 6 categories
+        with st.expander(f"{category} Trends", expanded=True):
+            category_data = health_data[
+                (health_data['Indicator Name'].isin(indicators)) &
+                (health_data['Value'].notna())
+            ]
+            
+            if not category_data.empty:
+                indicator_count = category_data['Indicator Name'].nunique()
+                st.write(f"Showing {indicator_count}/{len(indicators)} indicators with valid data")
+                show_animated_line_chart(category_data, f"{category} Trends")
+            else:
+                st.warning(f"No valid data available for any {category} indicators")
 
 def show_category_analysis(data, category_name):
     initialize_page(category_name)
