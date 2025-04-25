@@ -1,66 +1,70 @@
 import streamlit as st
 from dashboard import set_sidebar_background
+from categories import categories
 
 def show_sidebar():
+    """Display the sidebar navigation with background styling"""
     background_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Sidebar.png"
     set_sidebar_background(background_image_url)
 
     st.sidebar.title("Navigation")
     page = st.sidebar.radio("Select a page", [
         "About", 
-        "Overview Dashboard", 
-        "Trends Over Time",
-        "Demographic and Population Insights",
-        "Health Expenditure Insights", 
-        "Mortality and Morbidity Trends", 
-        "Comparative Insights", 
-        "Key Indicator Highlights",
-        "Maternal and Child Health",
-        "Infectious Diseases",
-        "Nutrition and Food Security"
+        "Overview",  # Renamed from "Overview Dashboard"
+        *categories.keys()  # Dynamically include all categories as pages
     ])
     return page
 
-def sidebar_filters(health):
+def sidebar_filters(health_data):
+    """Display data filters in the sidebar and return filter selections"""
     st.sidebar.title("Data Filters")
     
-    if 'Category' in health.columns:
-        available_categories = health['Category'].unique()
-        category = st.sidebar.selectbox("Select Category", available_categories)
-    else:
-        category = st.sidebar.selectbox("Select Category", ["Overview"])
+    # Category selection based on predefined categories
+    available_categories = list(categories.keys())
+    category = st.sidebar.selectbox(
+        "Select Category", 
+        available_categories,
+        help="Filter data by indicator category"
+    )
     
+    # Keyword filter with simplified options
     keyword_filter = st.sidebar.selectbox(
         "Filter by keyword", 
-        ["All", "kids", "female", "male", "child", "birth", "mortality"]
+        ["All", "child", "female", "male", "birth", "mortality"],
+        help="Narrow down indicators by common keywords"
     )
 
-    if 'Category' in health.columns:
-        indicators = health[health['Category'] == category]['Indicator Name'].unique()
-    else:
-        indicators = []
-        
+    # Get indicators for selected category
+    indicators = categories.get(category, [])
+    
+    # Apply keyword filter if not "All"
     if keyword_filter != "All":
-        indicators = [i for i in indicators if keyword_filter.lower() in i.lower()]
+        indicators = [ind for ind in indicators if keyword_filter.lower() in ind.lower()]
 
+    # Indicator selection with smart defaults
     selected_indicators = st.sidebar.multiselect(
         "Select Indicators", 
-        indicators,
-        max_selections=5
+        options=indicators,
+        default=indicators[:3] if len(indicators) > 3 else indicators,
+        help="Select up to 5 indicators to analyze"
     )
 
-    years = sorted(health['Year'].dropna().unique())
+    # Year range slider
+    years = sorted(health_data['Year'].dropna().unique())
     year_range = st.sidebar.slider(
         "Year Range", 
-        int(min(years)), 
-        int(max(years)),
-        (int(min(years)), int(max(years)))
+        min_value=int(min(years)), 
+        max_value=int(max(years)),
+        value=(int(min(years)), int(max(years))),
+        help="Select the time period to analyze"
     )
     
+    # Sort order radio buttons
     sort_order = st.sidebar.radio(
         "Sort Order", 
-        ["Oldest to Newest", "Newest to Oldest"],
-        horizontal=True
+        options=["Oldest to Newest", "Newest to Oldest"],
+        horizontal=True,
+        help="Sort data chronologically or reverse chronologically"
     )
 
     return category, selected_indicators, year_range, sort_order, keyword_filter

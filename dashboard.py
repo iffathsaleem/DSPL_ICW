@@ -1,13 +1,12 @@
 import streamlit as st
 import pandas as pd
 from categories import categories, map_category
-from visualizations import show_animated_line_chart, show_trend_chart
+from visualizations import show_trend_chart
 
-# Background image configuration
+# Background image configuration (renamed Overview)
 background_images = {
     "About": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/About.jpg",
-    "Overview Dashboard": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Overview.jpg",
-    "Trends Over Time": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Trends%20Overtime.JPG",
+    "Overview": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Overview.jpg",
     "Demographic and Population Insights": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Demographic%20Insights.jpg",
     "Health Expenditure Insights": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Expenditure%20Analysis.jpg",
     "Mortality and Morbidity Trends": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Mortality%20%26%20Morbidity.jpg",
@@ -81,130 +80,71 @@ def initialize_page(category):
     if image_url:
         set_background(image_url)
     set_sidebar_background(sidebar_image_url)
-    st.title(f"{category} Analysis")
+    st.title(f"{category}")
 
-def show_overview_stats(health):
-    initialize_page("Overview Dashboard")
+def show_overview(health_data):
+    initialize_page("Overview")
     
+    # Basic statistics
     col1, col2 = st.columns(2)
-    
     with col1:
         st.subheader("Dataset Summary")
-        total_indicators = health['Indicator Name'].nunique()
-        total_records = len(health)
-        years_covered = health['Year'].nunique()
-        earliest_year = health['Year'].min()
-        latest_year = health['Year'].max()
-        
-        st.metric("Total Indicators", total_indicators)
-        st.metric("Total Records", total_records)
-        st.metric("Years Covered", f"{earliest_year} to {latest_year}")
+        st.metric("Total Indicators", health_data['Indicator Name'].nunique())
+        st.metric("Years Covered", f"{health_data['Year'].min()} to {health_data['Year'].max()}")
     
     with col2:
         st.subheader("Value Statistics")
-        avg_value = health['Value'].mean()
-        max_value_row = health.loc[health['Value'].idxmax()]
-        min_value_row = health.loc[health['Value'].idxmin()]
-        
-        st.metric("Average Value", f"{avg_value:.2f}")
-        st.metric("Highest Value", 
-                 f"{max_value_row['Value']} ({max_value_row['Indicator Name']})")
-        st.metric("Lowest Value", 
-                 f"{min_value_row['Value']} ({min_value_row['Indicator Name']})")
+        st.metric("Average Value", f"{health_data['Value'].mean():.2f}")
+        st.metric("Data Points", len(health_data))
 
-    st.subheader("Full Dataset Preview")
-    st.dataframe(health)
-
-    st.subheader("Indicator Categories")
-    for group in categories:
-        with st.expander(group):
-            st.markdown("• " + "<br>• ".join(categories[group]), unsafe_allow_html=True)
-
-def show_trends_over_time(data, selected_indicators=None):
-    initialize_page("Trends Over Time")
-    st.subheader("Time Series Analysis of Health Indicators")
+    # Show trend charts for each category
+    st.subheader("Category Trends Over Time")
     
-    try:
-        # Show animated chart for all data if no specific indicators selected
-        if not selected_indicators:
-            st.info("Displaying trends for all available indicators")
-            show_animated_line_chart(data)
-        else:
-            # Filter data for selected indicators
-            filtered_data = data[data['Indicator Name'].isin(selected_indicators)]
-            if not filtered_data.empty:
-                show_animated_line_chart(filtered_data)
-                for indicator in selected_indicators:
-                    indicator_data = filtered_data[filtered_data['Indicator Name'] == indicator]
-                    show_trend_chart(indicator_data, indicator, [indicator])
+    for category, indicators in categories.items():
+        with st.expander(f"{category} Trends"):
+            category_data = health_data[health_data['Indicator Name'].isin(indicators)]
+            if not category_data.empty:
+                show_trend_chart(category_data, f"{category} Trends", indicators)
             else:
-                st.warning("No data available for the selected indicators")
-    except Exception as e:
-        st.error(f"Error generating trends visualization: {str(e)}")
-        
+                st.warning(f"No data available for {category}")
+
+def show_category_analysis(data, category_name):
+    initialize_page(category_name)
+    indicators = categories.get(category_name, [])
+    
+    if not indicators:
+        st.warning("No indicators defined for this category")
+        return
+    
+    category_data = data[data['Indicator Name'].isin(indicators)]
+    if not category_data.empty:
+        show_trend_chart(category_data, f"{category_name} Trends", indicators)
+    else:
+        st.warning("No data available for selected indicators")
+
 def show_demographic_and_population_insights(data):
-    initialize_page("Demographic and Population Insights")
-    st.subheader("Population Health Metrics")
-    st.write("Analyze demographic trends and population health indicators.")
+    show_category_analysis(data, "Demographic and Population Insights")
 
 def show_health_expenditure_insights(data):
-    initialize_page("Health Expenditure Insights")
-    st.subheader("Healthcare Spending Analysis")
-    st.write("Examine health expenditure patterns and funding allocations.")
+    show_category_analysis(data, "Health Expenditure Insights")
 
 def show_mortality_and_morbidity_trends(data):
-    initialize_page("Mortality and Morbidity Trends")
-    st.subheader("Mortality Patterns")
-    st.write("Investigate mortality rates and causes of death across populations.")
+    show_category_analysis(data, "Mortality and Morbidity Trends")
 
 def show_comparative_insights(data):
-    initialize_page("Comparative Insights")
-    st.subheader("Indicator Comparisons")
-    st.write("Compare different health metrics side by side.")
+    show_category_analysis(data, "Comparative Insights")
 
 def show_key_indicator_highlights(data):
-    initialize_page("Key Indicator Highlights")
-    st.subheader("Critical Health Metrics")
-    st.write("Focus on key performance indicators and benchmarks.")
+    show_category_analysis(data, "Key Indicator Highlights")
 
 def show_maternal_child_piecharts(data):
-    initialize_page("Maternal and Child Health")
-    st.subheader("Maternal and Child Health Indicators")
-    st.write("Analyze indicators related to maternal and child wellbeing.")
+    show_category_analysis(data, "Maternal and Child Health")
 
 def show_infectious_diseases_piecharts(data):
-    initialize_page("Infectious Diseases")
-    st.subheader("Disease Prevalence and Prevention")
-    st.write("Examine infectious disease trends and vaccination coverage.")
+    show_category_analysis(data, "Infectious Diseases")
 
 def show_nutrition_foodsecurity_piecharts(data):
-    initialize_page("Nutrition and Food Security")
-    st.subheader("Nutritional Health Metrics")
-    st.write("Assess food security and nutritional status indicators.")
-
-def show_expenditure_piecharts(data):
-    initialize_page("Health Expenditure Insights")
-    st.subheader("Health Expenditure Breakdown")
-    st.write("View composition of health expenditures by category.")
-
-def show_population_piecharts(data):
-    initialize_page("Demographic and Population Insights")
-    st.subheader("Population Demographics")
-    st.write("Analyze population composition and characteristics.")
-
-def show_mortality_piecharts(data):
-    initialize_page("Mortality and Morbidity Trends")
-    st.subheader("Mortality Composition")
-    st.write("Breakdown of mortality by different causes.")
-
-def show_category_data(filtered_data, category, selected_indicators):
-    if selected_indicators:
-        for indicator in selected_indicators:
-            st.subheader(f"{indicator} Over Time")
-            chart_data = filtered_data[filtered_data["Indicator Name"] == indicator]
-            st.dataframe(chart_data[["Country Name", "Year", "Value"]])
-    else:
-        st.info("Select indicator(s) from the sidebar to view detailed data.")
+    show_category_analysis(data, "Nutrition and Food Security")
 
 def prepare_dashboard_data(health, category, selected_indicators, year_range, sort_order, keyword_filter):
     set_sidebar_background(sidebar_image_url)
@@ -224,3 +164,12 @@ def prepare_dashboard_data(health, category, selected_indicators, year_range, so
         filtered = filtered[filtered['Indicator Name'].str.lower().str.contains(keyword)]
     
     return filtered
+
+def show_category_data(filtered_data, category, selected_indicators):
+    if selected_indicators:
+        for indicator in selected_indicators:
+            st.subheader(f"{indicator} Over Time")
+            chart_data = filtered_data[filtered_data["Indicator Name"] == indicator]
+            st.dataframe(chart_data[["Country Name", "Year", "Value"]])
+    else:
+        st.info("Select indicator(s) from the sidebar to view detailed data.")

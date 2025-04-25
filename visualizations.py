@@ -1,10 +1,33 @@
-import streamlit as st
 import plotly.express as px
-import plotly.graph_objects as go
+import streamlit as st
 import pandas as pd
 
-def show_bullet_graph(health, indicator, target_value, year_range):
+def show_trend_chart(data, title, indicators):
+    """Display a static trend chart for specific indicators"""
+    if data.empty:
+        st.warning(f"No data available for {title}")
+        return
+    
+    try:
+        fig = px.line(
+            data,
+            x='Year',
+            y='Value',
+            color='Indicator Name',
+            title=title,
+            markers=True,
+            labels={'Value': 'Value', 'Year': 'Year'}
+        )
+        fig.update_layout(
+            height=500,
+            hovermode='x unified'
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception as e:
+        st.error(f"Error generating chart: {str(e)}")
 
+def show_bullet_graph(health, indicator, target_value, year_range):
+    """Display a bullet graph for key indicators"""
     st.subheader("Key Indicator - Bullet Graph")
 
     if not indicator:
@@ -71,72 +94,8 @@ def show_bullet_graph(health, indicator, target_value, year_range):
 
         st.plotly_chart(fig)
 
-def show_radar_chart(health, category):
-    
-    st.subheader(f"Radar Chart: Indicator Comparison for {category}")
-    category_data = health[health['Category'] == category]
-    indicators = category_data['Indicator Name'].unique()
-
-    if len(indicators) == 0:
-        st.info("No indicators available in this category to display a radar chart.")
-        return
-
-    values = [category_data[category_data['Indicator Name'] == indicator]['Value'].mean() 
-              for indicator in indicators]
-    
-    radar_data = pd.DataFrame({'Indicator': indicators, 'Value': values})
-    fig = px.line_polar(radar_data, r='Value', theta='Indicator', line_close=True)
-    fig.update_layout(showlegend=False)
-    st.plotly_chart(fig)
-
-import plotly.express as px
-
-def show_animated_line_chart(data):
-    """Display an animated line chart of indicators over time"""
-    if data.empty:
-        st.warning("No data available for animation")
-        return
-    
-    try:
-        fig = px.line(
-            data.sort_values('Year'),
-            x='Year',
-            y='Value',
-            color='Indicator Name',
-            animation_frame='Year',
-            title='Health Indicators Over Time',
-            labels={'Value': 'Value', 'Year': 'Year'},
-            height=500
-        )
-        fig.update_layout(
-            xaxis_range=[data['Year'].min(), data['Year'].max()],
-            yaxis_range=[data['Value'].min()*0.9, data['Value'].max()*1.1],
-            transition={'duration': 500}
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    except Exception as e:
-        st.error(f"Animation error: {str(e)}")
-
-def show_trend_chart(data, title, indicators):
-    if data.empty:
-        st.warning(f"No data available for {title}")
-        return
-    
-    try:
-        fig = px.line(
-            data,
-            x='Year',
-            y='Value',
-            color='Indicator Name',
-            title=title,
-            markers=True
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    except Exception as e:
-        st.error(f"Chart error: {str(e)}")
-
 def show_comparative_chart(data, indicators, title, color_map=None):
-
+    """Display a comparative line chart for multiple indicators"""
     filtered_data = data[data['Indicator Name'].isin(indicators)]
     
     if filtered_data.empty:
@@ -150,10 +109,13 @@ def show_comparative_chart(data, indicators, title, color_map=None):
         color='Indicator Name',
         markers=True,
         color_discrete_map=color_map,
-        title=title
+        title=title,
+        labels={'Value': 'Value', 'Year': 'Year'}
     )
     
     fig.update_layout(
+        height=500,
+        hovermode='x unified',
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -165,9 +127,10 @@ def show_comparative_chart(data, indicators, title, color_map=None):
         xaxis=dict(title="Year")
     )
     
-    st.plotly_chart(fig)
+    st.plotly_chart(fig, use_container_width=True)
 
 def show_pie_chart(data, category_name, relevant_indicators=None):
+    """Display pie charts for category breakdown"""
     st.subheader(f"{category_name} Breakdown")
     
     category_data = data[data['Category'] == category_name]
@@ -193,54 +156,4 @@ def show_pie_chart(data, category_name, relevant_indicators=None):
             title=f"Indicator Contribution in {category_name} ({year})", 
             hole=0.3
         )
-        st.plotly_chart(fig)
-
-def show_stacked_area_chart(health):
-    st.subheader("Category Contributions Over Time")
-    fig = px.area(
-        health, 
-        x='Year', 
-        y='Value', 
-        color='Category', 
-        line_group='Category',
-        title="Area Chart of Categories"
-    )
-    st.plotly_chart(fig)
-
-def show_distribution_charts(data):
-
-    # Bar Chart of Indicator Frequency
-    st.subheader("Indicator Frequency by Code")
-    freq_data = data['Indicator_Code'].value_counts().reset_index()
-    freq_data.columns = ['Indicator_Code', 'Count']
-    fig_bar = px.bar(freq_data, x='Indicator_Code', y='Count', 
-                    title="Frequency of Each Indicator (Code)")
-    st.plotly_chart(fig_bar)
-    
-    # Line Chart of Total Values Over Time
-    st.subheader("Total Indicator Values Over Time")
-    trend_data = data.groupby('Year')['Value'].sum().reset_index()
-    fig_line = px.line(trend_data, x='Year', y='Value', 
-                      title="Trend of Total Indicator Values Over Time")
-    st.plotly_chart(fig_line)
-    
-    # Histogram of Value Distribution
-    st.subheader("Distribution of Indicator Values")
-    fig_hist = px.histogram(data, x='Value', nbins=50, 
-                           title="Distribution of All Indicator Values")
-    st.plotly_chart(fig_hist)
-    
-    # Heatmap of Indicator Counts per Year
-    st.subheader("Indicator Presence Heatmap (by Code and Year)")
-    heatmap_data = data.groupby(['Year', 'Indicator_Code']).size().unstack(fill_value=0)
-    fig_heat = px.imshow(heatmap_data.T, aspect='auto', 
-                        title="Indicator Presence Over Years (by Code)")
-    st.plotly_chart(fig_heat)
-    
-    # Donut Chart of Indicator Counts by Category
-    st.subheader("Indicator Count by Category")
-    category_counts = data['Category'].value_counts().reset_index()
-    category_counts.columns = ["Category", "Count"]
-    fig_donut = px.pie(category_counts, names="Category", values="Count", 
-                       hole=0.5, title="Indicator Distribution by Category")
-    st.plotly_chart(fig_donut)
+        st.plotly_chart(fig, use_container_width=True)
