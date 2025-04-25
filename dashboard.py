@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 from categories import categories, map_category
 from visualizations import show_trend_chart
-import plotly.express as px
 
 # Background image configuration (renamed Overview)
 background_images = {
@@ -83,6 +82,8 @@ def initialize_page(category):
     set_sidebar_background(sidebar_image_url)
     st.title(f"{category}")
 
+import plotly.express as px
+
 def show_overview(health_data):
     initialize_page("Overview")
     
@@ -98,49 +99,62 @@ def show_overview(health_data):
         st.metric("Average Value", f"{health_data['Value'].mean():.2f}")
         st.metric("Data Points", len(health_data))
 
-    # Show animated trend charts for each category
-    st.subheader("Animated Category Trends Over Time")
+    # Animated visualization
+    st.subheader("Animated Trends for All Indicators")
     
-    for category, indicators in categories.items():
-        with st.expander(f"{category} Trends"):
-            category_data = health_data[health_data['Indicator Name'].isin(indicators)]
-            if not category_data.empty:
-                # Create animated chart
-                fig = px.line(
-                    category_data.sort_values('Year'),
-                    x='Year',
-                    y='Value',
-                    color='Indicator Name',
-                    animation_frame='Year',
-                    title=f"{category} Trends Over Time",
-                    labels={'Value': 'Value', 'Year': 'Year'},
-                    height=500
-                )
-                fig.update_layout(
-                    xaxis_range=[category_data['Year'].min(), category_data['Year'].max()],
-                    yaxis_range=[category_data['Value'].min()*0.9, category_data['Value'].max()*1.1],
-                    transition={'duration': 500}
-                )
-                st.plotly_chart(fig, use_container_width=True)
-                
-                # Also show the static trend chart for reference
-                show_trend_chart(category_data, f"{category} Trends", indicators)
-            else:
-                st.warning(f"No data available for {category}")
-
-def show_category_analysis(data, category_name):
-    initialize_page(category_name)
-    indicators = categories.get(category_name, [])
-    
-    if not indicators:
-        st.warning("No indicators defined for this category")
-        return
-    
-    category_data = data[data['Indicator Name'].isin(indicators)]
-    if not category_data.empty:
-        show_trend_chart(category_data, f"{category_name} Trends", indicators)
-    else:
-        st.warning("No data available for selected indicators")
+    try:
+        # Create a sample of data if dataset is too large
+        if len(health_data) > 1000:
+            sample_data = health_data.sample(1000)
+            st.warning("Showing random sample of 1000 points for better performance")
+        else:
+            sample_data = health_data
+            
+        fig = px.scatter(
+            sample_data.sort_values('Year'),
+            x='Year',
+            y='Value',
+            color='Indicator Name',
+            animation_frame='Year',
+            title='Health Indicators Over Time',
+            labels={'Value': 'Value', 'Year': 'Year'},
+            height=600
+        )
+        
+        fig.update_layout(
+            xaxis_range=[sample_data['Year'].min()-1, sample_data['Year'].max()+1],
+            yaxis_range=[sample_data['Value'].min()*0.9, sample_data['Value'].max()*1.1],
+            transition={'duration': 300}
+        )
+        
+        # Add play button
+        fig.update_layout(
+            updatemenus=[{
+                "buttons": [
+                    {
+                        "args": [None, {"frame": {"duration": 500, "redraw": True},
+                                    "fromcurrent": True, "transition": {"duration": 300}}],
+                        "label": "Play",
+                        "method": "animate"
+                    }
+                ],
+                "direction": "left",
+                "pad": {"r": 10, "t": 87},
+                "showactive": False,
+                "type": "buttons",
+                "x": 0.1,
+                "xanchor": "right",
+                "y": 0,
+                "yanchor": "top"
+            }]
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+    except Exception as e:
+        st.error(f"Animation failed: {str(e)}")
+        st.write("Showing static visualization instead")
+        st.dataframe(health_data)
 
 def show_demographic_and_population_insights(data):
     show_category_analysis(data, "Demographic and Population Insights")
