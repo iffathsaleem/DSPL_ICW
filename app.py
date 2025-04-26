@@ -19,15 +19,17 @@ def load_data():
         health = pd.read_csv("Sri Lanka Health Statistics.csv")
         health['Value'] = pd.to_numeric(health['Value'], errors='coerce')
         health['Year'] = health['Year'].astype(int)
-        health['Category'] = health['Indicator Name'].apply(map_category)
+        health['Category'] = health['Indicator Name'].apply(map_category)  # Now this will work
         return health[health['Category'] != "Other"]
     except FileNotFoundError:
-        st.error("Data file not found. Please ensure the CSV exists.")
+        st.error("Data file not found. Please ensure 'Sri Lanka Health Statistics.csv' exists in the correct directory.")
         return pd.DataFrame()
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
+        st.error("Please check: 1) CSV file exists, 2) File format is correct, 3) Required columns are present")
         return pd.DataFrame()
 
+# In app.py, update the page routing in main():
 def main():
     health_data = load_data()
     if health_data.empty:
@@ -43,7 +45,7 @@ def main():
 
     if page == "About":
         show_about()
-        show_sri_lanka_map()
+        show_interactive_map()  # Replaced show_sri_lanka_map()
     elif page == "Overview":
         show_overview(filtered_data)
     elif page == "Population Health and Demographics":
@@ -56,9 +58,15 @@ def main():
         show_comparative_insights(filtered_data)
     elif page == "Key Indicator Highlights":
         show_key_indicator_highlights(filtered_data)
+    elif page == "Data Explorer":  # New page
+        show_data_explorer(filtered_data)
+    elif page == "Health Equity":  # New page
+        show_health_equity(filtered_data)
+    elif page == "Forecasting":  # New page
+        show_forecasting(filtered_data)
     elif page in categories:
         show_category_analysis(filtered_data, page)
-
+        
 if __name__ == "__main__":
     st.set_page_config(
         layout="wide",
