@@ -161,9 +161,15 @@ def show_overview(health_data):
     
     with col2:
         st.subheader("Value Statistics")
+        # Ensure numeric (already done in load_data but good practice to recheck)
         health_data['Value'] = pd.to_numeric(health_data['Value'], errors='coerce')
-        st.metric("Average Value", f"{health_data['Value'].mean():.2f}")
-        st.metric("Data Points", len(health_data.dropna(subset=['Value'])))
+        valid_values = health_data['Value'].dropna()
+        
+        if not valid_values.empty:
+            st.metric("Average Value", f"{valid_values.mean():.2f}")
+            st.metric("Data Points", len(valid_values))
+        else:
+            st.warning("No valid numeric values found")
 
     # Show animated charts for each category
     st.subheader("Category Trends Animation")
