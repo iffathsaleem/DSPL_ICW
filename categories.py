@@ -42,7 +42,9 @@ categories = {
         "Mortality rate, infant (per 1,000 live births)",
         "Mortality rate attributed to household and ambient air pollution, age-standardized (per 100,000 population)",
         "Suicide mortality rate (per 100,000 population)"
-    ]
+    ],
+    "Comparative Insights": [],
+    "Key Indicator Highlights": []
 }
 
 def map_category(indicator_name):
