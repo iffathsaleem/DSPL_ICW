@@ -1,4 +1,6 @@
 import streamlit as st
+from visualizations import show_interactive_map
+
 
 def show_about():
     bg_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/About.jpg"
@@ -52,8 +54,6 @@ def show_about():
     Data Sources: World Bank, Sri Lanka Health Ministry, and WHO datasets.
     """)
 
-def show_sri_lanka_map():
+def show_interactive_map(health_data):
     st.markdown("### Geographic Context")
-    st.image("https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Map%20or%20Sri%20Lanka.png", 
-            use_column_width=True)
     st.markdown("The map provides geographic reference for regional health variations across Sri Lanka.")

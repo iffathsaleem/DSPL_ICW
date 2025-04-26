@@ -9,6 +9,9 @@ def show_sidebar():
     page = st.sidebar.radio("Select a page", [
         "About",
         "Overview",
+        "Data Explorer",  # New
+        "Health Equity",  # New
+        "Forecasting",    # New
         "Maternal and Child Health", 
         "Infectious Diseases",
         "Nutrition and Food Security",
