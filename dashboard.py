@@ -4,13 +4,13 @@ import plotly.express as px
 import plotly.graph_objects as go
 from categories import categories
 
-# Background image configuration
+# Background images configuration
 background_images = {
     "About": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/About.jpg",
     "Overview": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Overview.jpg",
-    "Demographic and Population Insights": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Demographic%20Insights.jpg",
-    "Health Expenditure Insights": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Expenditure%20Analysis.jpg",
-    "Mortality and Morbidity Trends": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Mortality%20%26%20Morbidity.jpg",
+    "Population Health and Demographics": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Demographic%20Insights.jpg",
+    "Health Expenditures": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Expenditure%20Analysis.jpg",
+    "Mortality Rates": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Mortality%20%26%20Morbidity.jpg",
     "Comparative Insights": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Comparative%20Insights.jpg",
     "Key Indicator Highlights": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Key%20Indicator%20Highlights.jpg",
     "Maternal and Child Health": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Maternal%20and%20Child%20Health.jpg",
@@ -20,79 +20,93 @@ background_images = {
 
 sidebar_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Sidebar.png"
 
-def set_sidebar_background(image_url):
-    """Set styled background for sidebar"""
-    st.markdown(f"""
+def set_background(image_url):
+    st.markdown(
+        f"""
         <style>
-            [data-testid="stSidebar"] > div:first-child {{
-                background: url('{image_url}');
+            .stApp {{
+                background: linear-gradient(
+                    rgba(0, 0, 0, 0.7), 
+                    rgba(0, 0, 0, 0.7)
+                ), url("{image_url}");
                 background-size: cover;
                 background-position: center;
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+                color: white;
             }}
+            .block-container {{
+                background-color: rgba(0, 0, 0, 0);
+            }}
+            h1, h2, h3, h4, h5, h6 {{
+                color: white !important;
+            }}
+            .stMetric {{
+                background-color: rgba(0, 0, 0, 0.5) !important;
+                border-radius: 10px;
+                padding: 10px;
+            }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+def set_sidebar_background(image_url):
+    st.markdown(f"""
+        <style>
             [data-testid="stSidebar"]::before {{
                 content: "";
                 position: absolute;
                 top: 0;
                 left: 0;
-                right: 0;
-                bottom: 0;
-                background-color: rgba(255, 255, 255, 0.7);
-                z-index: 0;
-            }}
-            [data-testid="stSidebar"] > * {{
-                position: relative;
-                z-index: 1;
-            }}
-        </style>
-    """, unsafe_allow_html=True)
-
-def set_background(image_url):
-    """Set styled background for main page"""
-    st.markdown(f"""
-        <style>
-            .stApp {{
-                background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
-                            url('{image_url}');
+                width: 100%;
+                height: 100%;
+                background-image: url('{image_url}');
                 background-size: cover;
                 background-position: center;
-                background-attachment: fixed;
+                opacity: 0.3;
+                z-index: 0;
             }}
-            .block-container {{
-                background-color: rgba(255, 255, 255, 0.9);
-                border-radius: 10px;
-                padding: 2rem;
+            [data-testid="stSidebar"]::after {{
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(255, 255, 255, 0.7);
+                z-index: 1;
             }}
-            h1, h2, h3, h4 {{
-                color: #1a1a1a;
+            [data-testid="stSidebar"] * {{
+                position: relative;
+                z-index: 2;
+                color: black !important;
             }}
         </style>
     """, unsafe_allow_html=True)
 
 def initialize_page(category):
-    """Initialize page with proper styling and title"""
-    image_url = background_images.get(category, None)
+    image_url = background_images.get(category)
     if image_url:
         set_background(image_url)
     set_sidebar_background(sidebar_image_url)
-    st.title(f"{category} Analysis")
+    st.title(f"{category}")
 
 def format_value(value):
-    """Consistent numeric formatting across visualizations"""
     if pd.isna(value):
         return "N/A"
-    if value.is_integer():
-        return f"{int(value):,}"
-    return f"{value:,.2f}"
+    if isinstance(value, (int, float)):
+        if value.is_integer():
+            return f"{int(value):,}"
+        return f"{value:,.2f}"
+    return str(value)
 
 def show_overview(health_data):
-    """Main overview dashboard with animated category trends"""
     initialize_page("Overview")
     
-    # Data validation
     health_data['Value'] = pd.to_numeric(health_data['Value'], errors='coerce')
     valid_data = health_data.dropna(subset=['Value'])
     
-    # Summary metrics
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("Dataset Summary")
@@ -102,54 +116,35 @@ def show_overview(health_data):
     with col2:
         st.subheader("Value Statistics")
         if not valid_data.empty:
-            avg_value = valid_data['Value'].mean()
-            st.metric("Average Value", format_value(avg_value))
+            st.metric("Average Value", format_value(valid_data['Value'].mean()))
             st.metric("Data Points", len(valid_data))
-        else:
-            st.warning("No valid numeric values found")
 
-    # Category trend visualization
     st.subheader("Interactive Category Trends")
     
-    # Create tabs for each category
     tabs = st.tabs(list(categories.keys()))
-    
     for tab, (category, indicators) in zip(tabs, categories.items()):
         with tab:
             category_data = valid_data[valid_data['Indicator Name'].isin(indicators)]
             
             if not category_data.empty:
-                available_indicators = category_data['Indicator Name'].unique()
-                st.write(f"Showing {len(available_indicators)} indicators")
-                
-                # Create animated visualization
                 fig = px.line(
                     category_data,
                     x='Year',
                     y='Value',
                     color='Indicator Name',
                     animation_frame='Year',
-                    range_y=[category_data['Value'].min() * 0.9, 
-                            category_data['Value'].max() * 1.1],
                     markers=True,
-                    title=f'{category} Trends Over Time'
+                    title=f'{category} Trends'
                 )
-                
                 fig.update_layout(
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='white'),
                     height=600,
-                    hovermode='x unified',
-                    legend=dict(
-                        orientation="h",
-                        yanchor="bottom",
-                        y=-0.5,
-                        xanchor="center",
-                        x=0.5
-                    )
+                    hovermode='x unified'
                 )
-                
                 st.plotly_chart(fig, use_container_width=True)
                 
-                # Raw data display
                 with st.expander("View Raw Data"):
                     st.dataframe(
                         category_data[['Indicator Name', 'Year', 'Value']]
