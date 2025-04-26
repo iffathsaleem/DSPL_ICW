@@ -149,6 +149,12 @@ def show_animated_line_chart(data, title):
         st.error(f"Animation error: {str(e)}")
         st.dataframe(data)
 
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from categories import categories, map_category
+
 def show_overview(health_data):
     initialize_page("Overview")
     
@@ -182,97 +188,111 @@ def show_overview(health_data):
             if not category_data.empty:
                 # Get all available indicators in this category
                 available_indicators = category_data['Indicator Name'].unique()
-                st.write(f"Showing {len(available_indicators)} of {len(indicators)} indicators for {category}")
                 
-                # Create color sequence for all indicators
-                colors = px.colors.qualitative.Plotly
-                if len(available_indicators) > len(colors):
-                    colors = colors * (len(available_indicators) // len(colors) + 1)
+                # Create two columns - one for graph, one for data
+                col_graph, col_data = st.columns([3, 1])
                 
-                # Create figure
-                fig = go.Figure()
-                
-                # Add trace for each indicator
-                for i, indicator in enumerate(available_indicators):
-                    indicator_data = category_data[category_data['Indicator Name'] == indicator]
-                    fig.add_trace(go.Scatter(
-                        x=indicator_data['Year'],
-                        y=indicator_data['Value'],
-                        name=indicator,
-                        mode='lines+markers',
-                        marker=dict(size=8),
-                        line=dict(width=3),
-                        marker_color=colors[i],
-                        line_color=colors[i]
-                    ))
-                
-                # Animation frames
-                frames = []
-                years = sorted(category_data['Year'].unique())
-                
-                for year in years:
-                    frame_data = category_data[category_data['Year'] <= year]
-                    frames.append(go.Frame(
-                        data=[
-                            go.Scatter(
-                                x=frame_data[frame_data['Indicator Name'] == ind]['Year'],
-                                y=frame_data[frame_data['Indicator Name'] == ind]['Value'],
-                                mode='lines+markers'
-                            ) for ind in available_indicators
-                        ],
-                        name=str(year)
-                    ))
-                
-                # Add frames to figure
-                fig.frames = frames
-                
-                # Animation controls
-                fig.update_layout(
-                    updatemenus=[dict(
-                        type="buttons",
-                        buttons=[
-                            dict(
-                                label="▶ Play",
-                                method="animate",
-                                args=[None, {"frame": {"duration": 500, "redraw": True}, 
-                                            "fromcurrent": True, "transition": {"duration": 300}}]
-                            ),
-                            dict(
-                                label="❚❚ Pause",
-                                method="animate",
-                                args=[[None], {"frame": {"duration": 0, "redraw": False}, 
-                                              "mode": "immediate", "transition": {"duration": 0}}]
-                            )
-                        ],
-                        direction="left",
-                        pad={"r": 10, "t": 87},
-                        x=0.1,
-                        y=0
-                    )],
-                    xaxis=dict(
-                        range=[category_data['Year'].min()-1, category_data['Year'].max()+1],
-                        title='Year'
-                    ),
-                    yaxis=dict(
-                        range=[category_data['Value'].min()*0.9, category_data['Value'].max()*1.1],
-                        title='Value'
-                    ),
-                    title=f'{category} Trends',
-                    height=600,
-                    hovermode="x unified",
-                    legend=dict(
-                        orientation="h",
-                        yanchor="bottom",
-                        y=-0.5,
-                        xanchor="right",
-                        x=1
+                with col_graph:
+                    st.write(f"Showing {len(available_indicators)} of {len(indicators)} indicators for {category}")
+                    
+                    # Create color sequence for all indicators
+                    colors = px.colors.qualitative.Plotly
+                    if len(available_indicators) > len(colors):
+                        colors = colors * (len(available_indicators) // len(colors) + 1)
+                    
+                    # Create figure
+                    fig = go.Figure()
+                    
+                    # Add trace for each indicator
+                    for i, indicator in enumerate(available_indicators):
+                        indicator_data = category_data[category_data['Indicator Name'] == indicator]
+                        fig.add_trace(go.Scatter(
+                            x=indicator_data['Year'],
+                            y=indicator_data['Value'],
+                            name=indicator,
+                            mode='lines+markers',
+                            marker=dict(size=8),
+                            line=dict(width=3),
+                            marker_color=colors[i],
+                            line_color=colors[i]
+                        ))
+                    
+                    # Animation frames
+                    frames = []
+                    years = sorted(category_data['Year'].unique())
+                    
+                    for year in years:
+                        frame_data = category_data[category_data['Year'] <= year]
+                        frames.append(go.Frame(
+                            data=[
+                                go.Scatter(
+                                    x=frame_data[frame_data['Indicator Name'] == ind]['Year'],
+                                    y=frame_data[frame_data['Indicator Name'] == ind]['Value'],
+                                    mode='lines+markers'
+                                ) for ind in available_indicators
+                            ],
+                            name=str(year)
+                        ))
+                    
+                    # Add frames to figure
+                    fig.frames = frames
+                    
+                    # Animation controls
+                    fig.update_layout(
+                        updatemenus=[dict(
+                            type="buttons",
+                            buttons=[
+                                dict(
+                                    label="▶ Play",
+                                    method="animate",
+                                    args=[None, {"frame": {"duration": 500, "redraw": True}, 
+                                                "fromcurrent": True, "transition": {"duration": 300}}]
+                                ),
+                                dict(
+                                    label="❚❚ Pause",
+                                    method="animate",
+                                    args=[[None], {"frame": {"duration": 0, "redraw": False}, 
+                                                  "mode": "immediate", "transition": {"duration": 0}}]
+                                )
+                            ],
+                            direction="left",
+                            pad={"r": 10, "t": 87},
+                            x=0.1,
+                            y=0
+                        )],
+                        xaxis=dict(
+                            range=[category_data['Year'].min()-1, category_data['Year'].max()+1],
+                            title='Year'
+                        ),
+                        yaxis=dict(
+                            range=[category_data['Value'].min()*0.9, category_data['Value'].max()*1.1],
+                            title='Value'
+                        ),
+                        title=f'{category} Trends',
+                        height=600,
+                        hovermode="x unified",
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=-0.5,
+                            xanchor="right",
+                            x=1
+                        )
                     )
-                )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
                 
-                st.plotly_chart(fig, use_container_width=True)
+                with col_data:
+                    st.subheader("Raw Data")
+                    st.dataframe(
+                        category_data[['Indicator Name', 'Year', 'Value']]
+                        .sort_values(['Indicator Name', 'Year'])
+                        .reset_index(drop=True),
+                        height=600
+                    )
                 
                 # Show indicator list
-                with st.expander("View Indicators"):
+                with st.expander("Indicator Details"):
                     st.write(f"**Available indicators ({len(available_indicators)}):**")
                     for i, ind in enumerate(available_indicators):
                         st.markdown(f"<span style='color:{colors[i]}'>■</span> {ind}", unsafe_allow_html=True)
@@ -283,7 +303,7 @@ def show_overview(health_data):
                         st.write(list(missing))
             else:
                 st.warning(f"No valid data available for any {category} indicators")
-
+                
 def show_category_analysis(data, category_name):
     initialize_page(category_name)
     indicators = categories.get(category_name, [])
