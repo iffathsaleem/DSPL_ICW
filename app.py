@@ -13,12 +13,21 @@ from dashboard import (
 from about import show_about, show_sri_lanka_map
 from categories import map_category, categories
 
-@st.cache_data
 def load_data():
     try:
         health = pd.read_csv("Sri Lanka Health Statistics.csv")
+        
+        # Ensure proper numeric conversion
+        health['Value'] = pd.to_numeric(health['Value'], errors='coerce')
+        
+        # Handle year as integer
+        health['Year'] = health['Year'].astype(int)
+        
+        # Apply category mapping
         health['Category'] = health['Indicator Name'].apply(map_category)
+        
         return health[health['Category'] != "Other"]  # Exclude 'Other' category
+    
     except FileNotFoundError:
         st.error("Data file not found. Please ensure the CSV exists.")
         return pd.DataFrame()
