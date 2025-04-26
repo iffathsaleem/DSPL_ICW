@@ -51,7 +51,7 @@ def sidebar_filters(health_data):
         "Year Range",
         min_value=int(min(years)),
         max_value=int(max(years)),
-        value=(int(min(years)), int(max(years)))
+        value=(int(min(years)), int(max(years))))
     
     sort_order = st.sidebar.radio(
         "Sort Order",
