@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from categories import categories, map_category
+import plotly.graph_objects as go
 
 # Background image configuration
 background_images = {
