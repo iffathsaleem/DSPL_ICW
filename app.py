@@ -11,7 +11,7 @@ from dashboard import (
     show_category_analysis
 )
 from about import show_about, show_sri_lanka_map
-from categories import categories
+from categories import categories, map_category
 
 @st.cache_data
 def load_data():
