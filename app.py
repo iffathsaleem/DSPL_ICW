@@ -11,23 +11,16 @@ from dashboard import (
     show_category_analysis
 )
 from about import show_about, show_sri_lanka_map
-from categories import map_category, categories
+from categories import categories
 
+@st.cache_data
 def load_data():
     try:
         health = pd.read_csv("Sri Lanka Health Statistics.csv")
-        
-        # Ensure proper numeric conversion
         health['Value'] = pd.to_numeric(health['Value'], errors='coerce')
-        
-        # Handle year as integer
         health['Year'] = health['Year'].astype(int)
-        
-        # Apply category mapping
         health['Category'] = health['Indicator Name'].apply(map_category)
-        
-        return health[health['Category'] != "Other"]  # Exclude 'Other' category
-    
+        return health[health['Category'] != "Other"]
     except FileNotFoundError:
         st.error("Data file not found. Please ensure the CSV exists.")
         return pd.DataFrame()
@@ -43,35 +36,26 @@ def main():
     page = show_sidebar()
     category, selected_indicators, year_range, sort_order, keyword_filter = sidebar_filters(health_data)
     
-    # Apply filters
     filtered_data = health_data[
         (health_data['Year'].between(year_range[0], year_range[1])) &
         (health_data['Indicator Name'].str.contains(keyword_filter, case=False) if keyword_filter != "All" else True)
     ].sort_values("Year", ascending=sort_order == "Oldest to Newest")
 
-    # Page routing
     if page == "About":
         show_about()
         show_sri_lanka_map()
-    
     elif page == "Overview":
         show_overview(filtered_data)
-    
-    elif page == "Demographic and Population Insights":
+    elif page == "Population Health and Demographics":
         show_demographic_and_population_insights(filtered_data)
-    
-    elif page == "Health Expenditure Insights":
+    elif page == "Health Expenditures":
         show_health_expenditure_insights(filtered_data)
-    
-    elif page == "Mortality and Morbidity Trends":
+    elif page == "Mortality Rates":
         show_mortality_and_morbidity_trends(filtered_data)
-    
     elif page == "Comparative Insights":
         show_comparative_insights(filtered_data)
-    
     elif page == "Key Indicator Highlights":
         show_key_indicator_highlights(filtered_data)
-    
     elif page in categories:
         show_category_analysis(filtered_data, page)
 
