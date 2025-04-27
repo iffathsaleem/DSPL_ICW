@@ -152,9 +152,7 @@ def show_pie_chart(data, category_name, relevant_indicators=None):
         )
         st.plotly_chart(fig, use_container_width=True)
 
-# --------------------------
-# Advanced Visualizations
-# --------------------------
+
 
 @st.cache_data
 def load_geojson():
@@ -163,62 +161,31 @@ def load_geojson():
     return gpd.read_file(url)
 
 def show_interactive_map(health_data):
-    """Display choropleth map of health indicators by district"""
-    initialize_page("Sri Lanka Health Map")
+    """Simplified Sri Lanka map visualization"""
+    initialize_page("Sri Lanka Overview")
     
-    try:
-        districts = load_geojson()
-        
-        # Ensure your health_data has 'District' column matching GeoJSON's 'NAME_1'
-        if 'District' not in health_data.columns:
-            st.warning("District-level data not available in this dataset")
-            return
-            
-        latest_year = health_data['Year'].max()
-        indicator = st.selectbox(
-            "Select Indicator to Map",
-            health_data['Indicator Name'].unique()
-        )
-        
-        filtered = health_data[
-            (health_data['Indicator Name'] == indicator) &
-            (health_data['Year'] == latest_year)
-        ]
-        
-        merged = districts.merge(
-            filtered,
-            left_on='NAME_1',
-            right_on='District',
-            how='left'
-        )
-        
-        m = folium.Map(location=[7.8731, 80.7718], zoom_start=7)
-        
-        choropleth = folium.Choropleth(
-            geo_data=merged,
-            name='choropleth',
-            data=merged,
-            columns=['NAME_1', 'Value'],
-            key_on='feature.properties.NAME_1',
-            fill_color='YlGn',
-            nan_fill_color='gray',
-            legend_name=f'{indicator} ({latest_year})'
-        ).add_to(m)
-        
-        # Add tooltips
-        choropleth.geojson.add_child(
-            folium.features.GeoJsonTooltip(
-                fields=['NAME_1', 'Value'],
-                aliases=['District:', 'Value:'],
-                style=("font-weight: bold;")
-            )
-        )
-        
-        folium_static(m, width=800)
-        
-    except Exception as e:
-        st.error(f"Map rendering failed: {str(e)}")
-
+    # Create base map centered on Sri Lanka
+    m = folium.Map(location=[7.8731, 80.7718], zoom_start=7)
+    
+    # Add country outline (simplified coordinates)
+    folium.PolyLine(
+        locations=[
+            [9.8, 79.9], [9.1, 80.4], [8.3, 81.0], [7.5, 81.7], 
+            [6.0, 81.5], [5.9, 80.5], [6.8, 79.9], [9.8, 79.9]
+        ],
+        color='blue',
+        weight=2
+    ).add_to(m)
+    
+    # Add marker for capital
+    folium.Marker(
+        [6.9271, 79.8612],
+        popup="Colombo",
+        icon=folium.Icon(color='red')
+    ).add_to(m)
+    
+    folium_static(m, width=800)
+    
 def show_health_equity(health_data):
     """Analyze health disparities using Gini coefficient"""
     initialize_page("Health Equity Analysis")

@@ -3,14 +3,14 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from categories import categories
-
-# Background images configuration
+# Background image configuration
 background_images = {
     "About": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/About.jpg",
-    "Overview": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Overview.jpg",
-    "Population Health and Demographics": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Demographic%20Insights.jpg",
-    "Health Expenditures": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Expenditure%20Analysis.jpg",
-    "Mortality Rates": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Mortality%20%26%20Morbidity.jpg",
+    "Overview Dashboard": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Overview.jpg",
+    "Trends Over Time": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Trends%20Overtime.JPG",
+    "Demographic and Population Insights": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Demographic%20Insights.jpg",
+    "Health Expenditure Insights": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Expenditure%20Analysis.jpg",
+    "Mortality and Morbidity Trends": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Mortality%20%26%20Morbidity.jpg",
     "Comparative Insights": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Comparative%20Insights.jpg",
     "Key Indicator Highlights": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Key%20Indicator%20Highlights.jpg",
     "Maternal and Child Health": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Maternal%20and%20Child%20Health.jpg",
@@ -19,37 +19,6 @@ background_images = {
 }
 
 sidebar_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Sidebar.png"
-
-def set_background(image_url):
-    st.markdown(
-        f"""
-        <style>
-            .stApp {{
-                background: linear-gradient(
-                    rgba(0, 0, 0, 0.7), 
-                    rgba(0, 0, 0, 0.7)
-                ), url("{image_url}");
-                background-size: cover;
-                background-position: center;
-                background-repeat: no-repeat;
-                background-attachment: fixed;
-                color: white;
-            }}
-            .block-container {{
-                background-color: rgba(0, 0, 0, 0);
-            }}
-            h1, h2, h3, h4, h5, h6 {{
-                color: white !important;
-            }}
-            .stMetric {{
-                background-color: rgba(0, 0, 0, 0.5) !important;
-                border-radius: 10px;
-                padding: 10px;
-            }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
 
 def set_sidebar_background(image_url):
     st.markdown(f"""
@@ -85,28 +54,47 @@ def set_sidebar_background(image_url):
         </style>
     """, unsafe_allow_html=True)
 
+def set_background(image_url):
+    st.markdown(f"""
+        <style>
+            .stApp {{
+                background-image: url('{image_url}');
+                background-size: cover;
+                background-position: center;
+            }}
+            .overlay::before {{
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 0;
+            }}
+        </style>
+        <div class="overlay"></div>
+    """, unsafe_allow_html=True)
+
 def initialize_page(category):
-    image_url = background_images.get(category)
+    image_url = background_images.get(category, None)
     if image_url:
         set_background(image_url)
     set_sidebar_background(sidebar_image_url)
-    st.title(f"{category}")
+    st.title(f"{category} Analysis")
 
 def format_value(value):
+    """Consistent numeric formatting across visualizations"""
     if pd.isna(value):
         return "N/A"
-    if isinstance(value, (int, float)):
-        if value.is_integer():
-            return f"{int(value):,}"
-        return f"{value:,.2f}"
-    return str(value)
+    if value.is_integer():
+        return f"{int(value):,}"
+    return f"{value:,.2f}"
 
 def show_overview(health_data):
     initialize_page("Overview")
     
-    health_data['Value'] = pd.to_numeric(health_data['Value'], errors='coerce')
-    valid_data = health_data.dropna(subset=['Value'])
-    
+    # Basic statistics
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("Dataset Summary")
@@ -115,45 +103,138 @@ def show_overview(health_data):
     
     with col2:
         st.subheader("Value Statistics")
-        if not valid_data.empty:
-            st.metric("Average Value", format_value(valid_data['Value'].mean()))
-            st.metric("Data Points", len(valid_data))
+        health_data['Value'] = pd.to_numeric(health_data['Value'], errors='coerce')
+        st.metric("Average Value", f"{health_data['Value'].mean():.2f}")
+        st.metric("Data Points", len(health_data.dropna(subset=['Value'])))
 
-    st.subheader("Interactive Category Trends")
+    # Show animated charts for each category
+    st.subheader("Category Trends Animation")
     
+    # Create tabs for each major category
     tabs = st.tabs(list(categories.keys()))
+    
     for tab, (category, indicators) in zip(tabs, categories.items()):
         with tab:
-            category_data = valid_data[valid_data['Indicator Name'].isin(indicators)]
+            # Filter data for this category
+            category_data = health_data[
+                (health_data['Indicator Name'].isin(indicators)) &
+                (health_data['Value'].notna())
+            ].copy()
             
             if not category_data.empty:
-                fig = px.line(
-                    category_data,
-                    x='Year',
-                    y='Value',
-                    color='Indicator Name',
-                    animation_frame='Year',
-                    markers=True,
-                    title=f'{category} Trends'
-                )
+                # Get all available indicators in this category
+                available_indicators = category_data['Indicator Name'].unique()
+                
+                st.write(f"Showing {len(available_indicators)} of {len(indicators)} indicators for {category}")
+                
+                # Create color sequence for all indicators
+                colors = px.colors.qualitative.Plotly
+                if len(available_indicators) > len(colors):
+                    colors = colors * (len(available_indicators) // len(colors) + 1)
+                
+                # Create figure
+                fig = go.Figure()
+                
+                # Add trace for each indicator
+                for i, indicator in enumerate(available_indicators):
+                    indicator_data = category_data[category_data['Indicator Name'] == indicator]
+                    fig.add_trace(go.Scatter(
+                        x=indicator_data['Year'],
+                        y=indicator_data['Value'],
+                        name=indicator,
+                        mode='lines+markers',
+                        marker=dict(size=8),
+                        line=dict(width=3),
+                        marker_color=colors[i],
+                        line_color=colors[i]
+                    ))
+                
+                # Animation frames
+                frames = []
+                years = sorted(category_data['Year'].unique())
+                
+                for year in years:
+                    frame_data = category_data[category_data['Year'] <= year]
+                    frames.append(go.Frame(
+                        data=[
+                            go.Scatter(
+                                x=frame_data[frame_data['Indicator Name'] == ind]['Year'],
+                                y=frame_data[frame_data['Indicator Name'] == ind]['Value'],
+                                mode='lines+markers'
+                            ) for ind in available_indicators
+                        ],
+                        name=str(year)
+                    ))
+                
+                # Add frames to figure
+                fig.frames = frames
+                
+                # Animation controls
                 fig.update_layout(
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='white'),
+                    updatemenus=[dict(
+                        type="buttons",
+                        buttons=[
+                            dict(
+                                label="▶ Play",
+                                method="animate",
+                                args=[None, {"frame": {"duration": 500, "redraw": True}, 
+                                            "fromcurrent": True, "transition": {"duration": 300}}]
+                            ),
+                            dict(
+                                label="❚❚ Pause",
+                                method="animate",
+                                args=[[None], {"frame": {"duration": 0, "redraw": False}, 
+                                              "mode": "immediate", "transition": {"duration": 0}}]
+                            )
+                        ],
+                        direction="left",
+                        pad={"r": 10, "t": 87},
+                        x=0.1,
+                        y=0
+                    )],
+                    xaxis=dict(
+                        range=[category_data['Year'].min()-1, category_data['Year'].max()+1],
+                        title='Year'
+                    ),
+                    yaxis=dict(
+                        range=[category_data['Value'].min()*0.9, category_data['Value'].max()*1.1],
+                        title='Value'
+                    ),
+                    title=f'{category} Trends',
                     height=600,
-                    hovermode='x unified'
+                    hovermode="x unified",
+                    legend=dict(
+                        orientation="h",
+                        yanchor="bottom",
+                        y=-0.5,
+                        xanchor="right",
+                        x=1
+                    )
                 )
+                
                 st.plotly_chart(fig, use_container_width=True)
                 
-                with st.expander("View Raw Data"):
-                    st.dataframe(
-                        category_data[['Indicator Name', 'Year', 'Value']]
-                        .sort_values(['Year', 'Indicator Name'])
-                        .style.format({'Value': '{:,.2f}'}),
-                        height=300
-                    )
+                # Raw Data Section below the graph
+                st.subheader("Raw Data")
+                st.dataframe(
+                    category_data[['Indicator Name', 'Year', 'Value']]
+                    .sort_values(['Indicator Name', 'Year'])
+                    .reset_index(drop=True),
+                    height=400
+                )
+                
+                # Show indicator list
+                with st.expander("Indicator Details"):
+                    st.write(f"**Available indicators ({len(available_indicators)}):**")
+                    for i, ind in enumerate(available_indicators):
+                        st.markdown(f"<span style='color:{colors[i]}'>■</span> {ind}", unsafe_allow_html=True)
+                    
+                    missing = set(indicators) - set(available_indicators)
+                    if missing:
+                        st.write(f"**Missing indicators ({len(missing)}):**")
+                        st.write(list(missing))
             else:
-                st.warning(f"No data available for {category} indicators")
+                st.warning(f"No valid data available for any {category} indicators")
 
 def show_category_analysis(data, category_name):
     """Focused analysis for a specific category"""

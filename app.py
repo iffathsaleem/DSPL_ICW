@@ -10,7 +10,7 @@ from dashboard import (
     show_key_indicator_highlights,
     show_category_analysis
 )
-from about import show_about, show_sri_lanka_map
+from about import show_about, show_interactive_map
 from categories import categories, map_category
 
 @st.cache_data
@@ -45,7 +45,7 @@ def main():
 
     if page == "About":
         show_about()
-        show_interactive_map()  # Replaced show_sri_lanka_map()
+        show_interactive_map(health_data)
     elif page == "Overview":
         show_overview(filtered_data)
     elif page == "Population Health and Demographics":
@@ -66,7 +66,7 @@ def main():
         show_forecasting(filtered_data)
     elif page in categories:
         show_category_analysis(filtered_data, page)
-        
+
 if __name__ == "__main__":
     st.set_page_config(
         layout="wide",
