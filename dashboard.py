@@ -7,8 +7,6 @@ from categories import categories
 background_images = {
     "About": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/About.jpg",
     "Overview": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Overview.jpg",
-    "Trends Over Time": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Trends%20Overtime.JPG",
-    "Demographic and Population Insights": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Demographic%20Insights.jpg",
     "Health Expenditure Insights": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Expenditure%20Analysis.jpg",
     "Mortality and Morbidity Trends": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Mortality%20%26%20Morbidity.jpg",
     "Comparative Insights": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Comparative%20Insights.jpg",
@@ -20,40 +18,43 @@ background_images = {
 
 sidebar_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Sidebar.png"
 
+# Fix the set_sidebar_background function
 def set_sidebar_background(image_url):
     st.markdown(f"""
-        <style>
-            [data-testid="stSidebar"]::before {{
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-image: url('{image_url}');
-                background-size: cover;
-                background-position: center;
-                opacity: 0.3;
-                z-index: 0;
-            }}
-            [data-testid="stSidebar"]::after {{
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(255, 255, 255, 0.7);
-                z-index: 1;
-            }}
-            [data-testid="stSidebar"] * {{
-                position: relative;
-                z-index: 2;
-                color: black !important;
-            }}
-        </style>
-    """, unsafe_allow_html=True)
+    <style>
+    [data-testid="stSidebar"]::before {{
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('{image_url}');
+        background-size: cover;
+        background-position: center;
+        opacity: 0.3;
+        z-index: 0;
+    }}
 
+    [data-testid="stSidebar"]::after {{
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.7);
+        z-index: 1;
+    }}
+
+    [data-testid="stSidebar"] * {{
+        position: relative;
+        z-index: 2;
+        color: black !important;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+    
 def set_background(image_url):
     st.markdown(f"""
         <style>
@@ -235,6 +236,17 @@ def show_overview(health_data):
                         st.write(list(missing))
             else:
                 st.warning(f"No valid data available for any {category} indicators")
+
+def show_demographic_and_population_insights(data):
+    initialize_page("Demographic and Population Insights")
+    st.subheader("Population Health Metrics")
+    st.write("Analyze demographic trends and population health indicators.")
+    
+    # Show stacked area chart
+    show_stacked_area_chart(data)
+    
+    # Show population pie charts
+    show_population_piecharts(data)
 
 def show_category_analysis(data, category_name):
     """Focused analysis for a specific category"""
