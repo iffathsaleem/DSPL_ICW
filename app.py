@@ -17,19 +17,25 @@ from categories import categories, map_category
 def load_data():
     try:
         health = pd.read_csv("Sri Lanka Health Statistics.csv")
-        health['Value'] = pd.to_numeric(health['Value'], errors='coerce')
-        health['Year'] = health['Year'].astype(int)
-        health['Category'] = health['Indicator Name'].apply(map_category)  # Now this will work
-        return health[health['Category'] != "Other"]
+        health["Value"] = pd.to_numeric(health["Value"], errors='coerce')
+        health["Year"] = health["Year"].astype(int)
+        health["Category"] = health["Indicator Name"].apply(map_category)
+        
+        # Validate required columns exist
+        required_columns = ['Indicator Name', 'Year', 'Value', 'Category']
+        if not all(col in health.columns for col in required_columns):
+            st.error("Data file is missing required columns.")
+            return pd.DataFrame()
+            
+        return health[health["Category"] != "Other"]
+        
     except FileNotFoundError:
-        st.error("Data file not found. Please ensure 'Sri Lanka Health Statistics.csv' exists in the correct directory.")
+        st.error("Data file not found. Please ensure 'Sri Lanka Health Statistics.csv' exists.")
         return pd.DataFrame()
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
-        st.error("Please check: 1) CSV file exists, 2) File format is correct, 3) Required columns are present")
         return pd.DataFrame()
 
-# In app.py, update the page routing in main():
 def main():
     health_data = load_data()
     if health_data.empty:
