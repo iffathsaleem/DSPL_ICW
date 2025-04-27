@@ -73,21 +73,38 @@ def show_pie_chart(data, category_name, relevant_indicators=None):
         )
         st.plotly_chart(fig, use_container_width=True)
 
-import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
-import geopandas as gpd
-import folium
-from streamlit_folium import folium_static
-from statsmodels.tsa.arima.model import ARIMA
-from dashboard import initialize_page
+def show_stacked_area_chart(health_data):
+    st.subheader("Population Composition Over Time")
+    try:
+        fig = px.area(
+            health_data,
+            x='Year', 
+            y='Value',
+            color='Indicator Name',
+            line_group='Indicator Name',
+            title="Population Demographic Trends"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception as e:
+        st.error(f"Error generating area chart: {str(e)}")
 
-# --------------------------
-# Existing Visualizations
-# --------------------------
+def show_population_piecharts(data):
+    st.subheader("Population Breakdowns")
+    years = sorted(data['Year'].unique())
+    
+    for year in years[-3:]:  # Show last 3 years
+        year_data = data[data['Year'] == year]
+        if not year_data.empty:
+            fig = px.pie(
+                year_data,
+                names='Indicator Name',
+                values='Value',
+                title=f"Population Distribution ({year})",
+                hole=0.3
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
+# Fix the show_comparative_chart function (remove duplicate)
 def show_comparative_chart(data, indicators, title, color_map=None):
     """Display a comparative line chart for multiple indicators"""
     filtered_data = data[data['Indicator Name'].isin(indicators)]
@@ -95,7 +112,7 @@ def show_comparative_chart(data, indicators, title, color_map=None):
     if filtered_data.empty:
         st.warning(f"No data available for the selected indicators.")
         return
-    
+
     fig = px.line(
         filtered_data,
         x='Year',
@@ -122,7 +139,7 @@ def show_comparative_chart(data, indicators, title, color_map=None):
     )
     
     st.plotly_chart(fig, use_container_width=True)
-
+    
 def show_pie_chart(data, category_name, relevant_indicators=None):
     """Display pie charts for category breakdown"""
     st.subheader(f"{category_name} Breakdown")
@@ -185,7 +202,7 @@ def show_interactive_map(health_data):
     ).add_to(m)
     
     folium_static(m, width=800)
-    
+
 def show_health_equity(health_data):
     """Analyze health disparities using Gini coefficient"""
     initialize_page("Health Equity Analysis")
