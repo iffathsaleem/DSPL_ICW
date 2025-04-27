@@ -9,14 +9,18 @@ from streamlit_folium import folium_static
 from statsmodels.tsa.arima.model import ARIMA
 from dashboard import initialize_page
 
-def show_comparative_chart(data, indicators, title, color_map=None):
+# Helper to format numbers
+def format_value(value, is_percentage):
+    return f"{value:.2f}%" if is_percentage else f"{value:,.2f}"
+
+def show_comparative_chart(data, indicators, title, color_map=None, is_percentage=False):
     """Display a comparative line chart for multiple indicators"""
     filtered_data = data[data['Indicator Name'].isin(indicators)]
     
     if filtered_data.empty:
         st.warning(f"No data available for the selected indicators.")
         return
-    
+
     fig = px.line(
         filtered_data,
         x='Year',
@@ -26,6 +30,10 @@ def show_comparative_chart(data, indicators, title, color_map=None):
         color_discrete_map=color_map,
         title=title,
         labels={'Value': 'Value', 'Year': 'Year'}
+    )
+    
+    fig.update_traces(
+        hovertemplate=f"Year: %{{x}}<br>Value: %{{y:.2f}}{'%' if is_percentage else ''}<extra></extra>"
     )
     
     fig.update_layout(
@@ -44,7 +52,7 @@ def show_comparative_chart(data, indicators, title, color_map=None):
     
     st.plotly_chart(fig, use_container_width=True)
 
-def show_pie_chart(data, category_name, relevant_indicators=None):
+def show_pie_chart(data, category_name, relevant_indicators=None, is_percentage=False):
     """Display pie charts for category breakdown"""
     st.subheader(f"{category_name} Breakdown")
     
@@ -71,9 +79,13 @@ def show_pie_chart(data, category_name, relevant_indicators=None):
             title=f"Indicator Contribution in {category_name} ({year})", 
             hole=0.3
         )
+        fig.update_traces(
+            hovertemplate=f"%{{label}}: %{{value:.2f}}{'%' if is_percentage else ''}<extra></extra>"
+        )
         st.plotly_chart(fig, use_container_width=True)
 
-def show_stacked_area_chart(health_data):
+def show_stacked_area_chart(health_data, is_percentage=False):
+    """Population Composition Over Time (Area Chart)"""
     st.subheader("Population Composition Over Time")
     try:
         fig = px.area(
@@ -84,15 +96,19 @@ def show_stacked_area_chart(health_data):
             line_group='Indicator Name',
             title="Population Demographic Trends"
         )
+        fig.update_traces(
+            hovertemplate=f"Year: %{{x}}<br>Value: %{{y:.2f}}{'%' if is_percentage else ''}<extra></extra>"
+        )
         st.plotly_chart(fig, use_container_width=True)
     except Exception as e:
         st.error(f"Error generating area chart: {str(e)}")
 
-def show_population_piecharts(data):
+def show_population_piecharts(data, is_percentage=False):
+    """Population Pie Charts"""
     st.subheader("Population Breakdowns")
     years = sorted(data['Year'].unique())
     
-    for year in years[-3:]:  # Show last 3 years
+    for year in years[-3:]:  # Last 3 years
         year_data = data[data['Year'] == year]
         if not year_data.empty:
             fig = px.pie(
@@ -102,74 +118,10 @@ def show_population_piecharts(data):
                 title=f"Population Distribution ({year})",
                 hole=0.3
             )
+            fig.update_traces(
+                hovertemplate=f"%{{label}}: %{{value:.2f}}{'%' if is_percentage else ''}<extra></extra>"
+            )
             st.plotly_chart(fig, use_container_width=True)
-
-# Fix the show_comparative_chart function (remove duplicate)
-def show_comparative_chart(data, indicators, title, color_map=None):
-    """Display a comparative line chart for multiple indicators"""
-    filtered_data = data[data['Indicator Name'].isin(indicators)]
-    
-    if filtered_data.empty:
-        st.warning(f"No data available for the selected indicators.")
-        return
-
-    fig = px.line(
-        filtered_data,
-        x='Year',
-        y='Value',
-        color='Indicator Name',
-        markers=True,
-        color_discrete_map=color_map,
-        title=title,
-        labels={'Value': 'Value', 'Year': 'Year'}
-    )
-    
-    fig.update_layout(
-        height=500,
-        hovermode='x unified',
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=-0.6,
-            xanchor="center",
-            x=0.5
-        ),
-        margin=dict(b=100),
-        xaxis=dict(title="Year")
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
-    
-def show_pie_chart(data, category_name, relevant_indicators=None):
-    """Display pie charts for category breakdown"""
-    st.subheader(f"{category_name} Breakdown")
-    
-    category_data = data[data['Category'] == category_name]
-    
-    if relevant_indicators:
-        category_data = category_data[category_data['Indicator Name'].isin(relevant_indicators)]
-    
-    years = sorted(category_data['Year'].unique())
-    
-    for year in years:
-        year_data = category_data[category_data['Year'] == year]
-        
-        if year_data.empty:
-            st.warning(f"No data available for {category_name} in {year}.")
-            continue
-        
-        summary = year_data.groupby('Indicator Name')['Value'].mean().reset_index()
-        
-        fig = px.pie(
-            summary, 
-            names='Indicator Name', 
-            values='Value', 
-            title=f"Indicator Contribution in {category_name} ({year})", 
-            hole=0.3
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-
 
 @st.cache_data
 def load_geojson():
@@ -181,10 +133,8 @@ def show_interactive_map(health_data):
     """Simplified Sri Lanka map visualization"""
     initialize_page("Sri Lanka Overview")
     
-    # Create base map centered on Sri Lanka
     m = folium.Map(location=[7.8731, 80.7718], zoom_start=7)
     
-    # Add country outline (simplified coordinates)
     folium.PolyLine(
         locations=[
             [9.8, 79.9], [9.1, 80.4], [8.3, 81.0], [7.5, 81.7], 
@@ -194,7 +144,6 @@ def show_interactive_map(health_data):
         weight=2
     ).add_to(m)
     
-    # Add marker for capital
     folium.Marker(
         [6.9271, 79.8612],
         popup="Colombo",
@@ -219,21 +168,17 @@ def show_health_equity(health_data):
     try:
         st.markdown("""
         ### Health Inequality Across Districts
-        Measures disparity in health indicators using Gini coefficient
-        (0 = perfect equality, 1 = maximum inequality)
+        Gini Coefficient (0 = equality, 1 = inequality)
         """)
         
-        # Calculate Gini for each indicator-year combination
         equity_data = health_data.groupby(['Year', 'Indicator Name'])['Value'].apply(
             calculate_gini
         ).reset_index(name='Gini')
         
-        # Top 5 most unequal indicators
         st.subheader("Most Unequal Indicators")
         top_inequality = equity_data.sort_values('Gini', ascending=False).head(5)
         st.dataframe(top_inequality)
         
-        # Time trend visualization
         indicator = st.selectbox(
             "Select Indicator to View Trend",
             equity_data['Indicator Name'].unique()
@@ -253,7 +198,7 @@ def show_health_equity(health_data):
         st.error(f"Equity analysis failed: {str(e)}")
 
 def show_forecasting(health_data):
-    """ARIMA forecasting of health indicators"""
+    """ARIMA Forecasting"""
     initialize_page("Health Indicator Forecasting")
     
     indicator = st.selectbox(
@@ -281,14 +226,12 @@ def show_forecasting(health_data):
                 value=(int(ts_data.index.min()), int(ts_data.index.max()))
             )
         
-        train_data = ts_data[(ts_data.index >= train_years[0]) & 
-                            (ts_data.index <= train_years[1])]
+        train_data = ts_data[(ts_data.index >= train_years[0]) & (ts_data.index <= train_years[1])]
         
         model = ARIMA(train_data, order=(1,1,1))
         model_fit = model.fit()
         forecast = model_fit.forecast(steps=steps)
         
-        # Create visualization
         fig = go.Figure()
         fig.add_trace(go.Scatter(
             x=train_data.index,
@@ -311,7 +254,6 @@ def show_forecasting(health_data):
         
         st.plotly_chart(fig)
         
-        # Show forecast values
         with st.expander("View Forecast Values"):
             st.dataframe(forecast.to_frame(name='Predicted Value'))
             
@@ -319,23 +261,22 @@ def show_forecasting(health_data):
         st.error(f"Forecasting failed: {str(e)}")
 
 def show_data_explorer(health_data):
-    """Interactive data query and visualization tool"""
+    """Interactive Data Query Tool"""
     initialize_page("Data Explorer")
     
     st.subheader("Query and Visualize Data")
     
-    # Query builder
     col1, col2 = st.columns(2)
     with col1:
         year_range = st.slider(
             "Year Range",
             min_value=int(health_data['Year'].min()),
             max_value=int(health_data['Year'].max()),
-            value=(int(health_data['Year'].min()), int(health_data['Year'].max())))
+            value=(int(health_data['Year'].min()), int(health_data['Year'].max()))
+        )
     with col2:
         keyword = st.text_input("Filter by keyword (e.g. 'mortality')", "")
     
-    # Apply filters
     filtered = health_data[
         (health_data['Year'].between(year_range[0], year_range[1])) &
         (health_data['Indicator Name'].str.contains(keyword, case=False) if keyword else True)
@@ -345,7 +286,6 @@ def show_data_explorer(health_data):
         st.warning("No data matches your filters")
         return
     
-    # Visualization options
     st.subheader("Create Custom Visualization")
     
     chart_type = st.selectbox(
@@ -355,53 +295,20 @@ def show_data_explorer(health_data):
     
     cols = st.columns(2)
     with cols[0]:
-        x_axis = st.selectbox(
-            "X-Axis",
-            filtered.columns,
-            index=list(filtered.columns).index('Year')
-        )
+        x_axis = st.selectbox("X-Axis", filtered.columns, index=list(filtered.columns).index('Year'))
     with cols[1]:
-        y_axis = st.selectbox(
-            "Y-Axis",
-            filtered.columns,
-            index=list(filtered.columns).index('Value')
-        )
+        y_axis = st.selectbox("Y-Axis", filtered.columns, index=list(filtered.columns).index('Value'))
     
-    # Generate chart
     if chart_type == "Line Chart":
-        fig = px.line(
-            filtered,
-            x=x_axis,
-            y=y_axis,
-            color='Indicator Name',
-            title=f"{y_axis} by {x_axis}"
-        )
+        fig = px.line(filtered, x=x_axis, y=y_axis, color='Indicator Name')
     elif chart_type == "Bar Chart":
-        fig = px.bar(
-            filtered,
-            x=x_axis,
-            y=y_axis,
-            color='Indicator Name',
-            barmode='group'
-        )
+        fig = px.bar(filtered, x=x_axis, y=y_axis, color='Indicator Name', barmode='group')
     elif chart_type == "Scatter Plot":
-        fig = px.scatter(
-            filtered,
-            x=x_axis,
-            y=y_axis,
-            color='Indicator Name',
-            hover_name='Indicator Name'
-        )
-    else:  # Box Plot
-        fig = px.box(
-            filtered,
-            x=x_axis,
-            y=y_axis,
-            color='Indicator Name'
-        )
+        fig = px.scatter(filtered, x=x_axis, y=y_axis, color='Indicator Name')
+    else:
+        fig = px.box(filtered, x=x_axis, y=y_axis, color='Indicator Name')
     
     st.plotly_chart(fig, use_container_width=True)
     
-    # Show raw data
     with st.expander("View Filtered Data"):
         st.dataframe(filtered.sort_values(['Year', 'Indicator Name']))

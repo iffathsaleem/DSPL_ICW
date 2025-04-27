@@ -8,12 +8,15 @@ from dashboard import (
     show_mortality_and_morbidity_trends,
     show_comparative_insights,
     show_key_indicator_highlights,
-    show_category_analysis
+    show_category_analysis,
+    show_data_explorer,  # Ensure this function is defined
+    show_health_equity,  # Ensure this function is defined
+    show_forecasting  # Ensure this function is defined
 )
 from about import show_about, show_interactive_map
 from categories import categories, map_category
 
-@st.cache_data
+@st.cache_data(ttl=3600)  # Cache data with a TTL of 1 hour (3600 seconds)
 def load_data():
     try:
         health = pd.read_csv("Sri Lanka Health Statistics.csv")
@@ -39,15 +42,20 @@ def load_data():
 def main():
     health_data = load_data()
     if health_data.empty:
+        st.warning("No data available to display. Please check the data or try again later.")
         return
 
     page = show_sidebar()
     category, selected_indicators, year_range, sort_order, keyword_filter = sidebar_filters(health_data)
     
-    filtered_data = health_data[
-        (health_data['Year'].between(year_range[0], year_range[1])) &
+    filtered_data = health_data[ 
+        (health_data['Year'].between(year_range[0], year_range[1])) & 
         (health_data['Indicator Name'].str.contains(keyword_filter, case=False) if keyword_filter != "All" else True)
     ].sort_values("Year", ascending=sort_order == "Oldest to Newest")
+
+    if filtered_data.empty:
+        st.warning("No data matches the selected filters. Please adjust your filters.")
+        return
 
     if page == "About":
         show_about()
@@ -64,11 +72,11 @@ def main():
         show_comparative_insights(filtered_data)
     elif page == "Key Indicator Highlights":
         show_key_indicator_highlights(filtered_data)
-    elif page == "Data Explorer":  # New page
+    elif page == "Data Explorer":
         show_data_explorer(filtered_data)
-    elif page == "Health Equity":  # New page
+    elif page == "Health Equity":
         show_health_equity(filtered_data)
-    elif page == "Forecasting":  # New page
+    elif page == "Forecasting":
         show_forecasting(filtered_data)
     elif page in categories:
         show_category_analysis(filtered_data, page)
