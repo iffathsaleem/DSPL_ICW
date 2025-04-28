@@ -122,41 +122,40 @@ def create_data_filters(health_data):
     """Centralized filter controls with improved category handling"""
     filters = {}
     
-    # 1. Category filter - allow multiple selections
+    # 1. Category filter
     available_categories = list(categories.keys())
     filters['categories'] = st.sidebar.multiselect(
         "Select Categories", 
         available_categories,
-        default=available_categories[:1],  # Set default to the first category
+        default=available_categories[:1],
         help="Filter data by indicator categories",
         key="category_select"
     )
     
-    # 2. Keyword filter - allow multiple selections
+    # 2. Keyword filter
     keyword_options = ["child", "female", "male", "birth", "mortality", "health", "population"]
     filters['keywords'] = st.sidebar.multiselect(
         "Filter by keywords", 
         options=keyword_options,
-        default=[],  # Empty by default
+        default=[],
         help="Narrow down indicators by keywords",
         key="keyword_filter"
     )
 
-    # 3. Indicator selection (from selected categories)
+    # 3. Indicator selection
     indicators = []
-    if not filters['categories']:  # If no categories selected, show all indicators
+    if not filters['categories']:
         for cat in categories.values():
             indicators.extend(cat)
     else:
         for category in filters['categories']:
             indicators.extend(categories.get(category, []))
     
-    # Apply keyword filters if any
     if filters['keywords']:
         indicators = [ind for ind in indicators 
                      if any(kw.lower() in ind.lower() for kw in filters['keywords'])]
 
-    indicators = sorted(list(set(indicators)))  # Remove duplicates and sort
+    indicators = sorted(list(set(indicators)))
     
     filters['indicators'] = st.sidebar.multiselect(
         "Select Indicators", 
@@ -165,7 +164,7 @@ def create_data_filters(health_data):
         key="indicator_select"
     )
 
-    # 4. Year range (from actual data)
+    # 4. Year range
     if health_data is not None:
         years = sorted(health_data['Year'].unique())
         filters['year_range'] = st.sidebar.slider(
@@ -178,12 +177,15 @@ def create_data_filters(health_data):
     else:
         filters['year_range'] = (1960, 2023)  
 
-    # 5. Sort order (Ascending/Descending)
-    filters['sort_order'] = st.sidebar.radio(
-        "Sort Order",
-        ["Ascending", "Descending"],
-        horizontal=True,
-        key="sort_order"
-    )
+    # 5. Sort order - only show this once
+    if 'sort_order' not in st.session_state:
+        filters['sort_order'] = st.sidebar.radio(
+            "Sort Order",
+            ["Ascending", "Descending"],
+            horizontal=True,
+            key="sort_order"
+        )
+    else:
+        filters['sort_order'] = st.session_state.sort_order
 
     return filters
