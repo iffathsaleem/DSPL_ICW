@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from sidebar import show_sidebar, sidebar_filters
+from sidebar import show_sidebar
 from dashboard import (
     show_overview,
     show_demographic_and_population_insights,
@@ -8,15 +8,13 @@ from dashboard import (
     show_mortality_and_morbidity_trends,
     show_comparative_insights,
     show_key_indicator_highlights,
-    show_category_analysis,
-    show_data_explorer,  # Ensure this function is defined
-    show_health_equity,  # Ensure this function is defined
-    show_forecasting  # Ensure this function is defined
+    show_category_analysis
 )
 from about import show_about, show_interactive_map
 from categories import categories, map_category
+from visualizations import show_data_explorer
 
-@st.cache_data(ttl=3600)  # Cache data with a TTL of 1 hour (3600 seconds)
+@st.cache_data
 def load_data():
     try:
         health = pd.read_csv("Sri Lanka Health Statistics.csv")
@@ -39,27 +37,84 @@ def load_data():
         st.error(f"Error loading data: {str(e)}")
         return pd.DataFrame()
 
-def main():
-    health_data = load_data()
+def initialize_default_filters(health_data):
+    """Initialize default filter values based on data"""
     if health_data.empty:
-        st.warning("No data available to display. Please check the data or try again later.")
-        return
-
-    page = show_sidebar()
-    category, selected_indicators, year_range, sort_order, keyword_filter = sidebar_filters(health_data)
+        return {
+            'year_range': (2000, 2023),
+            'indicators': [],
+            'keyword': "All",
+            'category': "All",
+            'sort_order': "Ascending"
+        }
     
-    filtered_data = health_data[ 
-        (health_data['Year'].between(year_range[0], year_range[1])) & 
-        (health_data['Indicator Name'].str.contains(keyword_filter, case=False) if keyword_filter != "All" else True)
-    ].sort_values("Year", ascending=sort_order == "Oldest to Newest")
+    years = sorted(health_data['Year'].unique())
+    return {
+        'year_range': (int(min(years)), int(max(years))),
+        'indicators': [],
+        'keyword': "All",
+        'category': "All",
+        'sort_order': "Ascending"
+    }
 
-    if filtered_data.empty:
-        st.warning("No data matches the selected filters. Please adjust your filters.")
-        return
+def apply_filters(data, filters):
+    """Apply filters from session state to the data"""
+    if not filters or data.empty:
+        return data
+    
+    filtered = data.copy()
+    
+    # Apply year filter
+    filtered = filtered[
+        filtered['Year'].between(filters['year_range'][0], filters['year_range'][1])
+    ]
+    
+    # Apply indicator filter if any selected
+    if filters.get('indicators'):
+        filtered = filtered[filtered['Indicator Name'].isin(filters['indicators'])]
+    
+    # Apply keyword filter
+    if filters.get('keyword') and filters['keyword'] != "All":
+        filtered = filtered[
+            filtered['Indicator Name'].str.contains(filters['keyword'], case=False)
+        ]
+    
+    # Apply category filter
+    if filters.get('category') and filters['category'] != "All":
+        filtered = filtered[filtered['Category'] == filters['category']]
+    
+    # Apply sorting
+    sort_ascending = filters.get('sort_order', "Ascending") == "Ascending"
+    return filtered.sort_values("Year", ascending=sort_ascending)
 
+def main():
+    # Initialize page config first
+    st.set_page_config(
+        layout="wide",
+        page_title="Sri Lanka Health Dashboard",
+        page_icon="🇱🇰"
+    )
+    
+    # Load data
+    health_data = load_data()
+    
+    # Initialize default filters if they don't exist
+    if 'current_filters' not in st.session_state:
+        st.session_state.current_filters = initialize_default_filters(health_data)
+    
+    # Show sidebar and get current page
+    page = show_sidebar(health_data)
+    
+    # Get filtered data
+    filtered_data = apply_filters(
+        health_data,
+        st.session_state.get('current_filters', {})
+    )
+
+    # Page routing
     if page == "About":
         show_about()
-        show_interactive_map(health_data)
+        show_interactive_map(health_data)  # Full dataset for map
     elif page == "Overview":
         show_overview(filtered_data)
     elif page == "Population Health and Demographics":
@@ -74,17 +129,10 @@ def main():
         show_key_indicator_highlights(filtered_data)
     elif page == "Data Explorer":
         show_data_explorer(filtered_data)
-    elif page == "Health Equity":
-        show_health_equity(filtered_data)
     elif page == "Forecasting":
         show_forecasting(filtered_data)
     elif page in categories:
         show_category_analysis(filtered_data, page)
 
 if __name__ == "__main__":
-    st.set_page_config(
-        layout="wide",
-        page_title="Sri Lanka Health Dashboard",
-        page_icon="🇱🇰"
-    )
     main()

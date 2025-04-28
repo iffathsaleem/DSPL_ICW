@@ -1,13 +1,14 @@
 import streamlit as st
 from visualizations import show_interactive_map
 
+
 def show_about():
     bg_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/About.jpg"
 
     st.markdown(
         f"""
         <style>
-        [data-testid="stAppViewContainer"] > .main {{
+        .stApp {{
             background: linear-gradient(
                 rgba(0, 0, 0, 0.7), 
                 rgba(0, 0, 0, 0.7)
@@ -18,13 +19,10 @@ def show_about():
             background-attachment: fixed;
             color: white;
         }}
-        [data-testid="stHeader"] {{
-            background: rgba(0, 0, 0, 0);
+        .block-container {{
+            background-color: rgba(0, 0, 0, 0);
         }}
-        [data-testid="stSidebar"] {{
-            background: rgba(0, 0, 0, 0.5);
-        }}
-        h1, h2, h3, h4, h5, h6, p {{
+        h1, h2, h3, h4, h5, h6 {{
             color: white !important;
         }}
         </style>
@@ -33,10 +31,10 @@ def show_about():
     )
 
     st.title("About This Dashboard")
-    st.markdown(""" 
+    st.markdown("""
     ## Sri Lanka Health Insights Dashboard
 
-    This interactive dashboard provides a comprehensive visualization of national health indicators from **1960 to 2023**.
+    This interactive dashboard provides comprehensive visualization of national health indicators from 1960 to 2023.
 
     ### Key Focus Areas:
     - Maternal and child health  
@@ -53,5 +51,9 @@ def show_about():
     - Key performance indicators tracking  
     - Comparative insights across indicators  
 
-    **Data Sources:** World Bank, Sri Lanka Health Ministry, and WHO datasets.
+    Data Sources: World Bank, Sri Lanka Health Ministry, and WHO datasets.
     """)
+
+def show_interactive_map(health_data):
+    st.markdown("### Geographic Context")
+    st.markdown("The map provides geographic reference for regional health variations across Sri Lanka.")   

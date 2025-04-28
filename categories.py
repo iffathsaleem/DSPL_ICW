@@ -1,5 +1,4 @@
-categories = {
-    {
+categories ={
   "Mortality Rates": [
     "Birth rate, crude (per 1,000 people)",
     "Death rate, crude (per 1,000 people)",
@@ -286,9 +285,7 @@ categories = {
   
   "Injury and External Causes": [
     "Cause of death, by injury (% of total)"
-  ],
-    "Comparative Insights": [],
-    "Key Indicator Highlights": []
+  ]
 }
 
 def map_category(indicator_name):
