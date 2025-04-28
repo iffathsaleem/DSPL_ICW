@@ -1,6 +1,7 @@
 import streamlit as st
 from categories import categories
 
+# In sidebar.py, update the set_sidebar_background function:
 def set_sidebar_background(image_url):
     st.markdown(f"""
     <style>
@@ -36,40 +37,19 @@ def set_sidebar_background(image_url):
     [data-testid="stSidebar"] > * {{
         position: relative;
         z-index: 2;
+        color: #000000 !important;  /* Ensure all text is black */
     }}
 
-    /* SELECTION BOX STYLES - ORANGE WITH BLACK TEXT */
-    div[data-baseweb="select"] [aria-selected="true"],
-    div[data-baseweb="select"] [aria-selected="true"]:hover {{
-        background-color: #FFA500 !important;  /* Orange background */
-        color: #000000 !important;             /* Black text */
-        font-weight: bold !important;
-    }}
-
-    /* Dropdown options */
-    div[data-baseweb="select"] [role="option"] {{
-        color: #000000 !important;
-    }}
-
-    /* Hover states for dropdown options */
-    div[data-baseweb="select"] [role="option"]:hover {{
-        background-color: #FFD699 !important;  /* Lighter orange */
-        color: #000000 !important;
-    }}
-
-    /* Radio buttons and other selectors */
-    div[data-baseweb="radio"] [aria-checked="true"] {{
-        background-color: #FFA500 !important;
-        color: #000000 !important;
-        font-weight: bold !important;
-    }}
-
-    /* General text and labels */
+    /* Make sure all text elements are black */
+    .st-emotion-cache-10trblm, 
     .st-emotion-cache-1v0mbdj,
     .stMarkdown, 
-    .stText {{
+    .stText,
+    .stSelectbox label,
+    .stRadio label,
+    .stSlider label,
+    .stMultiSelect label {{
         color: #000000 !important;
-        font-weight: 500 !important;
     }}
 
     /* Input fields */
@@ -81,7 +61,6 @@ def set_sidebar_background(image_url):
     }}
     </style>
     """, unsafe_allow_html=True)
-    
 
 def show_sidebar(health_data=None):
     """Combined sidebar with navigation and filters"""
@@ -121,46 +100,47 @@ def show_sidebar(health_data=None):
     
     return page
 
+# In sidebar.py, modify the create_data_filters function:
 def create_data_filters(health_data):
     """Centralized filter controls with improved category handling"""
     filters = {}
     
-    # 1. Category filter (using predefined categories)
-    available_categories = ["All"] + list(categories.keys())
-    filters['category'] = st.sidebar.selectbox(
-        "Select Category", 
+    # 1. Category filter - allow multiple selections
+    available_categories = list(categories.keys())
+    filters['categories'] = st.sidebar.multiselect(
+        "Select Categories", 
         available_categories,
-        help="Filter data by indicator category",
+        default=available_categories[:1],
+        help="Filter data by indicator categories",
         key="category_select"
     )
     
-    # 2. Keyword filter
-    keyword_options = ["All"] + sorted({
-        kw for sublist in 
-        [["child", "female", "male", "birth", "mortality"]] 
-        for kw in sublist
-    })
-    
-    filters['keyword'] = st.sidebar.selectbox(
-        "Filter by keyword", 
+    # 2. Keyword filter - allow multiple selections
+    keyword_options = ["child", "female", "male", "birth", "mortality", "health", "population"]
+    filters['keywords'] = st.sidebar.multiselect(
+        "Filter by keywords", 
         options=keyword_options,
-        help="Narrow down indicators by common keywords",
+        default=[],
+        help="Narrow down indicators by keywords",
         key="keyword_filter"
     )
 
-    # 3. Indicator selection (from categories)
-    if filters['category'] == "All":
-        indicators = []
+    # 3. Indicator selection (from selected categories)
+    indicators = []
+    if not filters['categories']:  # If no categories selected, show all
         for cat in categories.values():
             indicators.extend(cat)
-        indicators = sorted(list(set(indicators)))  # Remove duplicates
     else:
-        indicators = categories.get(filters['category'], [])
+        for category in filters['categories']:
+            indicators.extend(categories.get(category, []))
     
-    if filters['keyword'] != "All":
+    # Apply keyword filters if any
+    if filters['keywords']:
         indicators = [ind for ind in indicators 
-                     if filters['keyword'].lower() in ind.lower()]
+                     if any(kw.lower() in ind.lower() for kw in filters['keywords'])]
 
+    indicators = sorted(list(set(indicators)))  # Remove duplicates
+    
     filters['indicators'] = st.sidebar.multiselect(
         "Select Indicators", 
         options=indicators,

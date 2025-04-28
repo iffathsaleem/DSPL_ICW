@@ -18,7 +18,8 @@ background_images = {
 
 sidebar_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Sidebar.png"
 
-# Fix the set_sidebar_background function
+# Set sidebar background with an overlay
+# Set sidebar background with an overlay
 def set_sidebar_background(image_url):
     st.markdown(f"""
     <style>
@@ -86,7 +87,7 @@ def set_sidebar_background(image_url):
     .st-emotion-cache-1v0mbdj,
     .stMarkdown, 
     .stText {{
-        color: #000000 !important;
+        color: #FFFFFF !important;  /* Change text color to white */
         font-weight: 500 !important;
     }}
 
@@ -99,35 +100,94 @@ def set_sidebar_background(image_url):
     }}
     </style>
     """, unsafe_allow_html=True)
-    
+
+# Set main background with overlay for content readability
 def set_background(image_url):
     st.markdown(f"""
-        <style>
-            .stApp {{
-                background-image: url('{image_url}');
-                background-size: cover;
-                background-position: center;
-            }}
-            .overlay::before {{
-                content: "";
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.7);
-                z-index: 0;
-            }}
-        </style>
-        <div class="overlay"></div>
+    <style>
+    .stApp {{
+        background: url("{image_url}") no-repeat center center fixed;
+        background-size: cover;
+        background-attachment: fixed;
+        background-position: center;
+        position: relative;
+        z-index: 0;
+    }}
+
+    /* Overlay for darkening the background slightly */
+    .stApp::before {{
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.6);  /* 60% black overlay */
+        z-index: 0;
+    }}
+
+    /* Make sure all your app content appears ABOVE the overlay */
+    .stApp > div {{
+        position: relative;
+        z-index: 1;
+    }}
+
+    /* Styling for titles and text */
+    .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, 
+    .stMarkdown h4, .stMarkdown h5, .stMarkdown h6 {{
+        color: #FFFFFF !important; /* White text for headings */
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3); /* Shadow for readability */
+    }}
+
+    .stMarkdown p, .stMarkdown li, .stMarkdown div {{
+        color: #FFFFFF !important;  /* White text for paragraphs */
+    }}
+
+    /* Dataframe styling */
+    .stDataFrame {{
+        background-color: rgba(255, 255, 255, 0.9) !important;
+        border-radius: 8px !important;
+    }}
+
+    /* Metric card styling */
+    .stMetric {{
+        background-color: rgba(255, 255, 255, 0.85) !important;
+        border-radius: 8px !important;
+        padding: 10px !important;
+        border-left: 4px solid #FFA500 !important;
+    }}
+    </style>
     """, unsafe_allow_html=True)
 
+# In dashboard.py, modify the initialize_page function:
 def initialize_page(category):
+    # Set the background image for the main area and the sidebar
     image_url = background_images.get(category, None)
     if image_url:
         set_background(image_url)
     set_sidebar_background(sidebar_image_url)
+    
+    # Add CSS for text containers with a slight white background for readability
+    st.markdown("""
+    <style>
+    .text-container {
+        background-color: rgba(255, 255, 255, 0.85);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .metric-container {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        border-radius: 10px;
+        margin: 10px 0;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Set title dynamically based on the category
     st.title(f"{category} Analysis")
+
 
 def format_value(value, is_percentage=False):
     """Format numbers consistently, handling percentages if specified."""
@@ -145,32 +205,62 @@ def format_value(value, is_percentage=False):
 def show_overview(health_data):
     initialize_page("Overview")
     
-    # Basic statistics
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("Dataset Summary")
-        st.metric("Total Indicators", health_data['Indicator Name'].nunique())
-        st.metric("Years Covered", f"{health_data['Year'].min()} to {health_data['Year'].max()}")
-    
-    with col2:
-        st.subheader("Value Statistics")
-        health_data['Value'] = pd.to_numeric(health_data['Value'], errors='coerce')
-        st.metric("Average Value", f"{health_data['Value'].mean():.2f}")
-        st.metric("Data Points", len(health_data.dropna(subset=['Value'])))
+    # Main container styling
+    st.markdown("""
+    <style>
+    .overview-container {
+        background-color: rgba(255, 255, 255, 0.85);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .metric-card {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+        border-left: 4px solid #FFA500;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-    # Show animated charts for each category
+    # Summary section
+    with st.container():
+        st.markdown('<div class="overview-container">', unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("Dataset Summary")
+            st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+            st.metric("Total Indicators", health_data['Indicator Name'].nunique())
+            st.metric("Years Covered", f"{health_data['Year'].min()} to {health_data['Year'].max()}")
+            st.markdown('</div>', unsafe_allow_html=True)
+        
+        with col2:
+            st.subheader("Value Statistics")
+            st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+            health_data['Value'] = pd.to_numeric(health_data['Value'], errors='coerce')
+            st.metric("Average Value", f"{health_data['Value'].mean():.2f}")
+            st.metric("Data Points", len(health_data.dropna(subset=['Value'])))
+            st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # Category trends with improved containers
     st.subheader("Category Trends Animation")
-    
-    # Create tabs for each major category
     tabs = st.tabs(list(categories.keys()))
     
     for tab, (category, indicators) in zip(tabs, categories.items()):
         with tab:
-            # Filter data for this category
-            category_data = health_data[
-                (health_data['Indicator Name'].isin(indicators)) &
-                (health_data['Value'].notna())
-            ].copy()
+            with st.container():
+                st.markdown('<div class="overview-container">', unsafe_allow_html=True)
+                
+                # Filter data for this category
+                category_data = health_data[
+                    (health_data['Indicator Name'].isin(indicators)) &
+                    (health_data['Value'].notna())
+                ].copy()
             
             if not category_data.empty:
                 # Get all available indicators in this category
@@ -294,11 +384,75 @@ def show_demographic_and_population_insights(data):
     st.subheader("Population Health Metrics")
     st.write("Analyze demographic trends and population health indicators.")
     
-    # Show stacked area chart
-    show_stacked_area_chart(data)
+    st.markdown("""
+    <style>
+    .insights-container {
+        background-color: rgba(255, 255, 255, 0.85);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    </style>
+    """, unsafe_allow_html=True)
     
-    # Show population pie charts
-    show_population_piecharts(data)
+    with st.container():
+        st.markdown('<div class="insights-container">', unsafe_allow_html=True)
+
+        demographic_indicators = categories.get("Population Health and Demographics", [])
+        
+        # Filter data for demographics
+        demo_data = data[
+            (data['Indicator Name'].isin(demographic_indicators)) & 
+            (data['Value'].notna())
+        ].copy()
+
+        if not demo_data.empty:
+            st.write(f"Found {demo_data['Indicator Name'].nunique()} demographic indicators.")
+            
+            # Stacked Area Chart
+            fig = px.area(
+                demo_data,
+                x='Year',
+                y='Value',
+                color='Indicator Name',
+                labels={'Value': 'Indicator Value', 'Year': 'Year'},
+                title="Demographic Trends Over Time",
+                color_discrete_sequence=px.colors.qualitative.Set3
+            )
+            
+            fig.update_layout(
+                height=600,
+                hovermode="x unified",
+                legend=dict(
+                    orientation="h",
+                    yanchor="top",
+                    y=-0.2,
+                    xanchor="center",
+                    x=0.5
+                ),
+                margin=dict(b=150)
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Raw data section
+            st.subheader("Demographic Data Table")
+            st.dataframe(
+                demo_data[['Indicator Name', 'Year', 'Value']].sort_values(['Indicator Name', 'Year']).reset_index(drop=True),
+                height=400,
+                width=1000
+            )
+
+            # Indicator details
+            with st.expander("Indicator Details"):
+                for indicator in sorted(demographic_indicators):
+                    st.markdown(f"• {indicator}")
+
+        else:
+            st.warning("No demographic indicators with available data.")
+
+        st.markdown('</div>', unsafe_allow_html=True)
 
 def show_category_analysis(data, category_name):
     """Focused analysis for a specific category"""

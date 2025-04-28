@@ -114,9 +114,9 @@ def main():
     # Page routing
     if page == "About":
         show_about()
-        show_interactive_map(health_data)  # Full dataset for map
+        show_interactive_map(health_data)  
     elif page == "Overview":
-        show_overview(filtered_data)
+        show_overview(health_data)  
     elif page == "Population Health and Demographics":
         show_demographic_and_population_insights(filtered_data)
     elif page == "Health Expenditures":
