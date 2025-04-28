@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from categories import categories
+
 # Background image configuration
 background_images = {
     "About": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/About.jpg",
@@ -18,7 +19,6 @@ background_images = {
 
 sidebar_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Sidebar.png"
 
-# Set sidebar background with an overlay
 # Set sidebar background with an overlay
 def set_sidebar_background(image_url):
     st.markdown(f"""
@@ -159,15 +159,15 @@ def set_background(image_url):
     </style>
     """, unsafe_allow_html=True)
 
-# In dashboard.py, modify the initialize_page function:
 def initialize_page(category):
+    """Initialize page without dependencies on visualizations"""
     # Set the background image for the main area and the sidebar
     image_url = background_images.get(category, None)
     if image_url:
         set_background(image_url)
     set_sidebar_background(sidebar_image_url)
     
-    # Add CSS for text containers with a slight white background for readability
+    # Add CSS for text containers
     st.markdown("""
     <style>
     .text-container {
@@ -187,6 +187,7 @@ def initialize_page(category):
     
     # Set title dynamically based on the category
     st.title(f"{category} Analysis")
+
 
 
 def format_value(value, is_percentage=False):
@@ -495,6 +496,60 @@ def show_category_analysis(data, category_name):
     else:
         st.warning("No valid data available for selected indicators")
 
+
+def show_key_indicator_highlights(data):
+    initialize_page("Key Indicator Highlights")
+    
+    st.markdown("""
+    ## Key Indicator Highlights
+    Track the most important health indicators over time.
+    """)
+    
+    # Define key indicators (you can customize this list)
+    key_indicators = [
+        "Life expectancy at birth, total (years)",
+        "Mortality rate, infant (per 1,000 live births)",
+        "Current health expenditure (% of GDP)",
+        "Prevalence of undernourishment (% of population)",
+        "Immunization, measles (% of children ages 12-23 months)"
+    ]
+    
+    # Filter to only include available indicators
+    available_indicators = [ind for ind in key_indicators if ind in data['Indicator Name'].unique()]
+    
+    if not available_indicators:
+        st.warning("No key indicator data available")
+        return
+    
+    # Show metrics for latest year
+    st.subheader("Latest Values")
+    latest_year = data['Year'].max()
+    latest_data = data[data['Year'] == latest_year]
+    
+    cols = st.columns(3)
+    for idx, indicator in enumerate(available_indicators):
+        value = latest_data[latest_data['Indicator Name'] == indicator]['Value'].values
+        if len(value) > 0:
+            cols[idx % 3].metric(
+                label=indicator,
+                value=format_value(value[0]),
+                help=f"Year: {latest_year}"
+            )
+    
+    # Show trend charts
+    st.subheader("Historical Trends")
+    for indicator in available_indicators:
+        indicator_data = data[data['Indicator Name'] == indicator]
+        if not indicator_data.empty:
+            fig = px.line(
+                indicator_data,
+                x='Year',
+                y='Value',
+                title=indicator,
+                markers=True
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
 # Category-specific functions (all routed through show_category_analysis)
 def show_demographic_and_population_insights(data): 
     show_category_analysis(data, "Population Health and Demographics")
@@ -510,3 +565,6 @@ def show_comparative_insights(data):
 
 def show_key_indicator_highlights(data): 
     show_category_analysis(data, "Key Indicator Highlights")
+def show_dashboard(data):
+    st.markdown("---")
+    show_comparative_section(data) 

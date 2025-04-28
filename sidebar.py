@@ -1,7 +1,7 @@
 import streamlit as st
-from categories import categories
+from categories import categories  # Ensure categories is correctly imported
 
-# In sidebar.py, update the set_sidebar_background function:
+# Function to set the background for the sidebar
 def set_sidebar_background(image_url):
     st.markdown(f"""
     <style>
@@ -62,26 +62,43 @@ def set_sidebar_background(image_url):
     </style>
     """, unsafe_allow_html=True)
 
+# Function to show the sidebar with filters
 def show_sidebar(health_data=None):
     """Combined sidebar with navigation and filters"""
     set_sidebar_background("https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Sidebar.png")
     
     # Navigation Section
     st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Select a page", [
+    
+    # Main sections (About, Overview, Data Analysis)
+    page = st.sidebar.radio("Go to", [
         "About",
         "Overview",
-        "Data Explorer",
-        "Forecasting",
-        "Maternal and Child Health", 
-        "Infectious Diseases",
-        "Nutrition and Food Security",
-        "Health Expenditures",
-        "Population Health and Demographics",
-        "Mortality Rates",
-        "Comparative Insights",
-        "Key Indicator Highlights"
-    ], key="page_selector")
+        "Data Analysis",
+        "Comparative Insights"
+    ], key="main_page_selector")
+
+    # If Data Analysis is selected, show category selector
+    if page == "Data Analysis":
+        page = st.sidebar.selectbox(
+            "Select Category",
+            [
+                "Mortality Rates",
+                "Maternal and Child Health",
+                "Infectious Diseases",
+                "Health Expenditure",
+                "Healthcare Infrastructure and Services",
+                "Water, Sanitation, and Hygiene",
+                "Non-communicable Diseases and Risk Factors",
+                "Nutrition and Food Security",
+                "Demographic Indicators",
+                "Reproductive Health",
+                "Civil Registration",
+                "Injury and External Causes"
+                
+            ],
+            key="category_selector"
+        )
     
     # Initialize filters if they don't exist
     if 'current_filters' not in st.session_state:
@@ -93,14 +110,14 @@ def show_sidebar(health_data=None):
             'sort_order': "Ascending"
         }
     
-    # Always show filters (modified from original)
+    # Always show filters
     st.sidebar.title("Data Filters")
     filters = create_data_filters(health_data)
     st.session_state.current_filters = filters
     
     return page
 
-# In sidebar.py, modify the create_data_filters function:
+# Function to create data filters (categories, keywords, indicators, etc.)
 def create_data_filters(health_data):
     """Centralized filter controls with improved category handling"""
     filters = {}
@@ -110,7 +127,7 @@ def create_data_filters(health_data):
     filters['categories'] = st.sidebar.multiselect(
         "Select Categories", 
         available_categories,
-        default=available_categories[:1],
+        default=available_categories[:1],  # Set default to the first category
         help="Filter data by indicator categories",
         key="category_select"
     )
@@ -120,14 +137,14 @@ def create_data_filters(health_data):
     filters['keywords'] = st.sidebar.multiselect(
         "Filter by keywords", 
         options=keyword_options,
-        default=[],
+        default=[],  # Empty by default
         help="Narrow down indicators by keywords",
         key="keyword_filter"
     )
 
     # 3. Indicator selection (from selected categories)
     indicators = []
-    if not filters['categories']:  # If no categories selected, show all
+    if not filters['categories']:  # If no categories selected, show all indicators
         for cat in categories.values():
             indicators.extend(cat)
     else:
@@ -139,7 +156,7 @@ def create_data_filters(health_data):
         indicators = [ind for ind in indicators 
                      if any(kw.lower() in ind.lower() for kw in filters['keywords'])]
 
-    indicators = sorted(list(set(indicators)))  # Remove duplicates
+    indicators = sorted(list(set(indicators)))  # Remove duplicates and sort
     
     filters['indicators'] = st.sidebar.multiselect(
         "Select Indicators", 
@@ -159,9 +176,9 @@ def create_data_filters(health_data):
             key="year_slider"
         )
     else:
-        filters['year_range'] = (1960, 2023)  # Default fallback
+        filters['year_range'] = (1960, 2023)  
 
-    # 5. Sort order
+    # 5. Sort order (Ascending/Descending)
     filters['sort_order'] = st.sidebar.radio(
         "Sort Order",
         ["Ascending", "Descending"],

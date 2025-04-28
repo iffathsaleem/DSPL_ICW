@@ -4,7 +4,6 @@ import plotly.express as px
 import folium
 from streamlit_folium import folium_static
 from statsmodels.tsa.arima.model import ARIMA
-from dashboard import initialize_page
 
 # Initialize CSS styles (only once)
 def initialize_visualization():
@@ -31,124 +30,16 @@ def initialize_visualization():
     </style>
     """, unsafe_allow_html=True)
 
-# Comparative line chart
-def show_comparative_chart(data, indicators, title, color_map=None):
-    initialize_visualization()
-    filtered_data = data[data['Indicator Name'].isin(indicators)]
-    
-    if filtered_data.empty:
-        st.warning("No data available for the selected indicators.")
-        return
-
-    st.markdown('<div class="viz-container">', unsafe_allow_html=True)
-    st.markdown(f'<div class="viz-title">{title}</div>', unsafe_allow_html=True)
-    st.markdown('<div class="plotly-container">', unsafe_allow_html=True)
-
-    fig = px.line(
-        filtered_data,
-        x='Year',
-        y='Value',
-        color='Indicator Name',
-        markers=True,
-        color_discrete_map=color_map,
-        title=title,
-        labels={'Value': 'Value', 'Year': 'Year'}
-    )
-
-    fig.update_layout(
-        height=500,
-        hovermode='x unified',
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=-0.6,
-            xanchor="center",
-            x=0.5
-        ),
-        margin=dict(b=100),
-        xaxis=dict(title="Year")
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# Pie charts for category breakdown
-def show_pie_chart(data, category_name, relevant_indicators=None):
-    initialize_visualization()
-    st.subheader(f"{category_name} Breakdown")
-    
-    category_data = data[data['Category'] == category_name]
-    
-    if relevant_indicators:
-        category_data = category_data[category_data['Indicator Name'].isin(relevant_indicators)]
-
-    years = sorted(category_data['Year'].unique())
-    
-    for year in years:
-        year_data = category_data[category_data['Year'] == year]
-        
-        if year_data.empty:
-            st.warning(f"No data available for {category_name} in {year}.")
-            continue
-
-        summary = year_data.groupby('Indicator Name')['Value'].mean().reset_index()
-
-        fig = px.pie(
-            summary,
-            names='Indicator Name',
-            values='Value',
-            title=f"Indicator Contribution in {category_name} ({year})",
-            hole=0.3
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
-
-# Stacked area chart for population
-def show_stacked_area_chart(health_data):
-    st.subheader("Population Composition Over Time")
-    try:
-        fig = px.area(
-            health_data,
-            x='Year',
-            y='Value',
-            color='Indicator Name',
-            line_group='Indicator Name',
-            title="Population Demographic Trends"
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    except Exception as e:
-        st.error(f"Error generating area chart: {str(e)}")
-
-# Pie charts for population breakdowns
-def show_population_piecharts(data):
-    st.subheader("Population Breakdowns")
-    years = sorted(data['Year'].unique())
-    
-    for year in years[-3:]:  # Show last 3 years
-        year_data = data[data['Year'] == year]
-        if not year_data.empty:
-            fig = px.pie(
-                year_data,
-                names='Indicator Name',
-                values='Value',
-                title=f"Population Distribution ({year})",
-                hole=0.3
-            )
-            st.plotly_chart(fig, use_container_width=True)
-
 # Interactive map
-def show_interactive_map(health_data=None):
-    initialize_page("Sri Lanka Overview")
-    
+def show_interactive_map():
+    """Standalone map function that doesn't depend on dashboard"""
     st.markdown("### Geographic Context")
     st.markdown("Sri Lanka is an island country in South Asia with diverse geographic features.")
 
     m = folium.Map(location=[7.8731, 80.7718], zoom_start=7)
-
+    
     folium.PolyLine(
-        locations=[
+        locations=[ 
             [9.8, 79.9], [9.1, 80.4], [8.3, 81.0], [7.5, 81.7],
             [6.0, 81.5], [5.9, 80.5], [6.8, 79.9], [9.8, 79.9]
         ],
@@ -197,131 +88,138 @@ def show_interactive_map(health_data=None):
     - **Eastern Coast**: Beautiful beaches and Trincomalee harbor
     """)
 
-# Data explorer
-def render_visualization(data, sort_order):
-    st.markdown("## Data Visualization")
-    chart_type = st.selectbox(
-        "Chart Type",
-        ["Line Chart", "Bar Chart", "Scatter Plot", "Box Plot"],
-        key="viz_chart_type"
+def show_comparative_section(health_data):
+    """Standalone comparative insights section"""
+    initialize_visualization()
+    
+    st.header("Comparative Insights")
+    st.markdown("Compare multiple indicators over time using interactive charts.")
+    
+    # Get available indicators and years
+    available_indicators = sorted(health_data['Indicator Name'].unique())
+    min_year, max_year = int(health_data['Year'].min()), int(health_data['Year'].max())
+    
+    # Create controls in an expander
+    with st.expander("Comparison Settings", expanded=True):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            selected_indicators = st.multiselect(
+                "Select indicators to compare",
+                options=available_indicators,
+                default=available_indicators[:2] if len(available_indicators) >= 2 else None,
+                key="comp_insights_multiselect"
+            )
+            
+        with col2:
+            year_range = st.slider(
+                "Year range",
+                min_value=min_year,
+                max_value=max_year,
+                value=(min_year, max_year),
+                key="comp_insights_years"
+            )
+    
+    # Show message if no indicators selected
+    if not selected_indicators:
+        st.info("Please select at least one indicator to compare")
+        return
+    
+    # Filter data
+    filtered_data = health_data[
+        (health_data['Indicator Name'].isin(selected_indicators)) &
+        (health_data['Year'] >= year_range[0]) &
+        (health_data['Year'] <= year_range[1])
+    ]
+    
+    if filtered_data.empty:
+        st.warning("No data available for the selected filters")
+        return
+    
+    # Visualization section
+    st.subheader("Visual Comparison")
+    
+    # Chart type selection
+    chart_type = st.radio(
+        "Chart type",
+        options=["Line Chart", "Bar Chart", "Area Chart"],
+        horizontal=True,
+        key="comp_insights_chart_type"
     )
-
+    
+    # Create color mapping
+    colors = px.colors.qualitative.Plotly
+    color_map = {ind: colors[i % len(colors)] for i, ind in enumerate(selected_indicators)}
+    
+    # Create the selected chart
     if chart_type == "Line Chart":
         fig = px.line(
-            data,
+            filtered_data,
             x='Year',
             y='Value',
             color='Indicator Name',
-            title="Trend Over Time"
+            markers=True,
+            color_discrete_map=color_map,
+            labels={'Value': 'Value', 'Year': 'Year'}
         )
     elif chart_type == "Bar Chart":
         fig = px.bar(
-            data,
+            filtered_data,
             x='Year',
             y='Value',
             color='Indicator Name',
-            barmode='group',
-            title="Comparison by Year"
+            color_discrete_map=color_map,
+            labels={'Value': 'Value', 'Year': 'Year'}
         )
-    elif chart_type == "Scatter Plot":
-        fig = px.scatter(
-            data,
+    elif chart_type == "Area Chart":
+        fig = px.area(
+            filtered_data,
             x='Year',
             y='Value',
             color='Indicator Name',
-            hover_name='Indicator Name',
-            title="Value Distribution"
+            line_group='Indicator Name',
+            color_discrete_map=color_map,
+            labels={'Value': 'Value', 'Year': 'Year'}
         )
-    else:
-        fig = px.box(
-            data,
-            x='Indicator Name',
-            y='Value',
-            color='Indicator Name',
-            title="Statistical Distribution"
-        )
-
+    
+    # Update layout
     fig.update_layout(
+        height=500,
+        hovermode='x unified',
         legend=dict(
             orientation="h",
-            yanchor="top",
+            yanchor="bottom",
             y=-0.3,
             xanchor="center",
             x=0.5
         ),
         margin=dict(b=100)
     )
-
+    
     st.plotly_chart(fig, use_container_width=True)
-
-    with st.expander("View Filtered Data"):
-        st.dataframe(
-            data.sort_values(
-                ['Year', 'Value'],
-                ascending=(sort_order == "Ascending")
-            ),
-            height=300
-        )
-
-def show_data_explorer(health_data):
-    initialize_page("Data Explorer")
-    st.markdown("## Data Explorer\nAdjust filters in the sidebar to update the visualization below.")
-
-    if 'current_filters' not in st.session_state:
-        st.warning("Please configure filters in the sidebar first.")
-        return
-
-    filters = st.session_state.current_filters
-
-    filtered = health_data[
-        (health_data['Year'].between(filters['year_range'][0], filters['year_range'][1])) &
-        (health_data['Indicator Name'].isin(filters['indicators']))
-    ]
-
-    if filters.get('keyword') and filters['keyword'] != "All":
-        filtered = filtered[filtered['Indicator Name'].str.contains(filters['keyword'], case=False)]
-
-    if filters.get('category') and filters['category'] != "All":
-        filtered = filtered[filtered['Category'] == filters['category']]
-
-    if filtered.empty:
-        st.warning("No data matches current filters. Try broadening your criteria.")
-    else:
-        render_visualization(filtered, filters.get('sort_order', "Ascending"))
-
-# Forecasting
-def show_forecasting(data):
-    initialize_page("Forecasting")
-    st.markdown("## Time Series Forecasting\nThis section provides basic ARIMA forecasting for selected health indicators.")
-
-    if 'current_filters' not in st.session_state:
-        st.warning("Please select indicators in the sidebar first.")
-        return
-
-    indicators = st.session_state.current_filters.get('indicators', [])
-    if not indicators:
-        st.warning("Please select at least one indicator in the sidebar.")
-        return
-
-    for indicator in indicators:
-        st.subheader(f"Forecast for {indicator}")
-
-        indicator_data = data[data['Indicator Name'] == indicator]
-        if len(indicator_data) < 5:
-            st.warning(f"Not enough data points for {indicator}. Need at least 5 years of data.")
-            continue
-
-        ts = indicator_data.set_index('Year')['Value'].sort_index()
-
-        try:
-            model = ARIMA(ts, order=(1, 1, 1))
-            model_fit = model.fit()
-            forecast = model_fit.forecast(steps=5)
-
-            forecast_years = [ts.index.max() + i for i in range(1, 6)]
-            forecast_df = pd.DataFrame({'Year': forecast_years, 'Forecasted Value': forecast.values})
-
-            fig = px.line(forecast_df, x='Year', y='Forecasted Value', title=f"Forecast for {indicator}")
-            st.plotly_chart(fig, use_container_width=True)
-        except Exception as e:
-            st.error(f"Error forecasting {indicator}: {str(e)}")
+    
+    # Statistical comparison
+    st.subheader("Statistical Analysis")
+    with st.expander("View Detailed Statistics"):
+        tab1, tab2 = st.tabs(["Summary Statistics", "Correlation Matrix"])
+        
+        with tab1:
+            st.write("Descriptive statistics for selected indicators:")
+            stats = filtered_data.groupby('Indicator Name')['Value'].describe()
+            st.dataframe(stats.style.format("{:.2f}").background_gradient(cmap='Blues'))
+        
+        with tab2:
+            if len(selected_indicators) > 1:
+                try:
+                    pivot_data = filtered_data.pivot_table(
+                        index='Year',
+                        columns='Indicator Name',
+                        values='Value'
+                    ).corr()
+                    st.write("Correlation between indicators:")
+                    st.dataframe(pivot_data.style.format("{:.2f}").background_gradient(
+                        cmap='RdBu', vmin=-1, vmax=1))
+                except Exception as e:
+                    st.warning(f"Could not calculate correlation: {str(e)}")
+            else:
+                st.info("Select at least 2 indicators to see correlation analysis")

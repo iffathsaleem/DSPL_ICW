@@ -6,13 +6,12 @@ from dashboard import (
     show_demographic_and_population_insights,
     show_health_expenditure_insights,
     show_mortality_and_morbidity_trends,
-    show_comparative_insights,
     show_key_indicator_highlights,
     show_category_analysis
 )
-from about import show_about, show_interactive_map
+from about import show_about
 from categories import categories, map_category
-from visualizations import show_data_explorer
+from visualizations import show_comparative_section, show_interactive_map
 
 @st.cache_data
 def load_data():
@@ -114,7 +113,6 @@ def main():
     # Page routing
     if page == "About":
         show_about()
-        show_interactive_map(health_data)  
     elif page == "Overview":
         show_overview(health_data)  
     elif page == "Population Health and Demographics":
@@ -123,16 +121,16 @@ def main():
         show_health_expenditure_insights(filtered_data)
     elif page == "Mortality Rates":
         show_mortality_and_morbidity_trends(filtered_data)
-    elif page == "Comparative Insights":
-        show_comparative_insights(filtered_data)
-    elif page == "Key Indicator Highlights":
-        show_key_indicator_highlights(filtered_data)
-    elif page == "Data Explorer":
-        show_data_explorer(filtered_data)
-    elif page == "Forecasting":
-        show_forecasting(filtered_data)
+    elif page == "Healthcare Infrastructure":
+        show_category_analysis(filtered_data, "Healthcare Infrastructure and Services")
+    elif page == "Water and Sanitation":
+        show_category_analysis(filtered_data, "Water, Sanitation and Hygiene")
+    elif page == "Non-communicable Diseases":
+        show_category_analysis(filtered_data, "Non-communicable Diseases and Risk Factors")
     elif page in categories:
         show_category_analysis(filtered_data, page)
+    elif page == "Comparative Insights":
+        show_comparative_section(health_data)
 
 if __name__ == "__main__":
     main()
