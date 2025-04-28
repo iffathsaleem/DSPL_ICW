@@ -17,10 +17,13 @@ def show_about():
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed;
-            color: white;
         }}
         .block-container {{
             background-color: rgba(0, 0, 0, 0);
+        }}
+        /* Ensure all text is white */
+        h1, h2, h3, h4, h5, h6, p, li, div {{
+            color: white !important;
         }}
         </style>
         """,
