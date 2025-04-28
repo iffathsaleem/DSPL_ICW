@@ -89,7 +89,6 @@ def show_interactive_map():
     """)
 
 def show_comparative_section(health_data):
-    """Standalone comparative insights section"""
     initialize_visualization()
     
     st.header("Comparative Insights")
@@ -99,7 +98,7 @@ def show_comparative_section(health_data):
     available_indicators = sorted(health_data['Indicator Name'].unique())
     min_year, max_year = int(health_data['Year'].min()), int(health_data['Year'].max())
     
-    # Create controls in an expander
+    # Create controls
     with st.expander("Comparison Settings", expanded=True):
         col1, col2 = st.columns(2)
         
@@ -120,7 +119,6 @@ def show_comparative_section(health_data):
                 key="comp_insights_years"
             )
     
-    # Show message if no indicators selected
     if not selected_indicators:
         st.info("Please select at least one indicator to compare")
         return
@@ -139,19 +137,18 @@ def show_comparative_section(health_data):
     # Visualization section
     st.subheader("Visual Comparison")
     
-    # Chart type selection
+    # Enhanced chart type selection
     chart_type = st.radio(
         "Chart type",
-        options=["Line Chart", "Bar Chart", "Area Chart"],
+        options=["Line Chart", "Bar Chart", "Area Chart", "Pie Chart", "Heatmap", "Scatter Plot", "Box Plot"],
         horizontal=True,
         key="comp_insights_chart_type"
     )
     
-    # Create color mapping
     colors = px.colors.qualitative.Plotly
     color_map = {ind: colors[i % len(colors)] for i, ind in enumerate(selected_indicators)}
     
-    # Create the selected chart
+    # Create charts based on selection
     if chart_type == "Line Chart":
         fig = px.line(
             filtered_data,
@@ -159,8 +156,7 @@ def show_comparative_section(health_data):
             y='Value',
             color='Indicator Name',
             markers=True,
-            color_discrete_map=color_map,
-            labels={'Value': 'Value', 'Year': 'Year'}
+            color_discrete_map=color_map
         )
     elif chart_type == "Bar Chart":
         fig = px.bar(
@@ -168,8 +164,8 @@ def show_comparative_section(health_data):
             x='Year',
             y='Value',
             color='Indicator Name',
-            color_discrete_map=color_map,
-            labels={'Value': 'Value', 'Year': 'Year'}
+            barmode='group',
+            color_discrete_map=color_map
         )
     elif chart_type == "Area Chart":
         fig = px.area(
@@ -178,25 +174,90 @@ def show_comparative_section(health_data):
             y='Value',
             color='Indicator Name',
             line_group='Indicator Name',
-            color_discrete_map=color_map,
-            labels={'Value': 'Value', 'Year': 'Year'}
+            color_discrete_map=color_map
+        )
+    elif chart_type == "Pie Chart":
+        latest_data = filtered_data[filtered_data['Year'] == max_year]
+        fig = px.pie(
+            latest_data,
+            names='Indicator Name',
+            values='Value',
+            color='Indicator Name',
+            color_discrete_map=color_map
+        )
+    elif chart_type == "Heatmap":
+        pivot_data = filtered_data.pivot_table(
+            index='Year',
+            columns='Indicator Name',
+            values='Value'
+        )
+        fig = px.imshow(
+            pivot_data,
+            labels=dict(x="Indicator", y="Year", color="Value"),
+            aspect="auto"
+        )
+    elif chart_type == "Scatter Plot":
+        if len(selected_indicators) >= 2:
+            pivot_data = filtered_data.pivot_table(
+                index='Year',
+                columns='Indicator Name',
+                values='Value'
+            ).reset_index()
+            fig = px.scatter(
+                pivot_data,
+                x=selected_indicators[0],
+                y=selected_indicators[1],
+                trendline="ols"
+            )
+        else:
+            st.warning("Select at least 2 indicators for scatter plot")
+            return
+    elif chart_type == "Box Plot":
+        fig = px.box(
+            filtered_data,
+            x='Indicator Name',
+            y='Value',
+            color='Indicator Name',
+            color_discrete_map=color_map
         )
     
-    # Update layout
+    # Add annotations for key insights
+    if chart_type in ["Line Chart", "Bar Chart", "Area Chart"]:
+        for indicator in selected_indicators:
+            ind_data = filtered_data[filtered_data['Indicator Name'] == indicator]
+            max_val = ind_data['Value'].max()
+            min_val = ind_data['Value'].min()
+            fig.add_annotation(
+                x=ind_data[ind_data['Value'] == max_val]['Year'].values[0],
+                y=max_val,
+                text=f"Peak: {max_val:.2f}",
+                showarrow=True,
+                arrowhead=1
+            )
+            fig.add_annotation(
+                x=ind_data[ind_data['Value'] == min_val]['Year'].values[0],
+                y=min_val,
+                text=f"Low: {min_val:.2f}",
+                showarrow=True,
+                arrowhead=1
+            )
+    
     fig.update_layout(
         height=500,
         hovermode='x unified',
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=-0.3,
-            xanchor="center",
-            x=0.5
-        ),
+        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
         margin=dict(b=100)
     )
     
     st.plotly_chart(fig, use_container_width=True)
+    
+    # Add key takeaways
+    st.subheader("Key Takeaways")
+    with st.expander("View Insights"):
+        for indicator in selected_indicators:
+            ind_data = filtered_data[filtered_data['Indicator Name'] == indicator]
+            change = (ind_data['Value'].iloc[-1] - ind_data['Value'].iloc[0]) / ind_data['Value'].iloc[0] * 100
+            st.write(f"**{indicator}**: Changed by {change:.1f}% from {year_range[0]} to {year_range[1]}")
     
     # Statistical comparison
     st.subheader("Statistical Analysis")
