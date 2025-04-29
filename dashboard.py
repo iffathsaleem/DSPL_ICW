@@ -48,64 +48,8 @@ def show_overview(health_data):
             st.metric("Data Points", len(health_data.dropna(subset=['Value'])))
             st.markdown('</div>', unsafe_allow_html=True)
 
-    # Animated bubble chart showing trends across all categories
-    st.subheader("Animated Trends Across Categories")
-    
-    # Prepare data for animation
-    animation_data = health_data.copy()
-    animation_data['Year'] = animation_data['Year'].astype(str)  # For proper animation
-    
-    # Create a mapping of indicators to categories
-    indicator_to_category = {}
-    for category, indicators in categories.items():
-        for indicator in indicators:
-            indicator_to_category[indicator] = category
-    
-    # Add category column to data
-    animation_data['Category'] = animation_data['Indicator Name'].map(indicator_to_category)
-    
-    # Create animated bubble chart
-    try:
-        fig = px.scatter(
-            animation_data.dropna(subset=['Value', 'Category']),
-            x="Year",
-            y="Value",
-            animation_frame="Year",
-            size="Value",
-            color="Category",
-            hover_name="Indicator Name",
-            size_max=60,
-            range_y=[0, animation_data['Value'].max() * 1.1],
-            height=700,
-            template='plotly_dark',
-            title="Health Indicators Trend Animation"
-        )
-        
-        # Improve animation settings
-        fig.layout.updatemenus[0].buttons[0].args[1]["frame"]["duration"] = 1000
-        fig.layout.updatemenus[0].buttons[0].args[1]["transition"]["duration"] = 500
-        
-        st.plotly_chart(fig, use_container_width=True)
-    except Exception as e:
-        st.error(f"Could not create animated chart: {str(e)}")
-        st.write("Showing static visualization instead")
-        
-        # Fallback to static visualization
-        fig = px.scatter(
-            animation_data.dropna(subset=['Value', 'Category']),
-            x="Year",
-            y="Value",
-            color="Category",
-            hover_name="Indicator Name",
-            size="Value",
-            size_max=60,
-            height=700,
-            template='plotly_dark'
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-    # Category trends (your existing code)
-    st.subheader("Category Trends")
+    # Category trends with animation
+    st.subheader("Animated Category Trends (1960-2023)")
     tabs = st.tabs(list(categories.keys()))
     
     for tab, (category, indicators) in zip(tabs, categories.items()):
@@ -115,56 +59,155 @@ def show_overview(health_data):
                 (health_data['Value'].notna())
             ].copy()
             
+            # Filter years to 1960-2023
+            category_data = category_data[(category_data['Year'] >= 1960) & (category_data['Year'] <= 2023)]
+            
             if not category_data.empty:
-                available_indicators = category_data['Indicator Name'].unique()
+                # Get unique indicator names and codes
+                available_indicators = category_data[['Indicator Name', 'Indicator_Code']].drop_duplicates()
                 st.write(f"Showing {len(available_indicators)} of {len(indicators)} indicators for {category}")
                 
-                # Create figure with larger size
+                # Create figure with proper spacing
                 fig = go.Figure()
-                colors = px.colors.qualitative.Plotly
                 
-                for i, indicator in enumerate(available_indicators):
-                    indicator_data = category_data[category_data['Indicator Name'] == indicator]
-                    color = colors[i % len(colors)]
+                # Add traces using Indicator_Code in legend
+                colors = px.colors.qualitative.Plotly
+                for i, row in available_indicators.iterrows():
+                    indicator_name = row['Indicator Name']
+                    indicator_code = row['Indicator_Code']
+                    indicator_data = category_data[category_data['Indicator Name'] == indicator_name]
+                    
                     fig.add_trace(go.Scatter(
                         x=indicator_data['Year'],
                         y=indicator_data['Value'],
-                        name=indicator,
+                        name=indicator_code,  # Use Indicator_Code from CSV
                         mode='lines+markers',
-                        marker=dict(size=8),
-                        line=dict(width=3),
-                        marker_color=color,
-                        line_color=color
+                        marker=dict(size=10),
+                        line=dict(width=4),
+                        marker_color=colors[i % len(colors)],
+                        hovertemplate=f"{indicator_name}<br>Year: %{{x}}<br>Value: %{{y}}<extra></extra>",
+                        customdata=[indicator_name] * len(indicator_data)
                     ))
                 
+                # Set up layout with increased spacing (1 inch ≈ 100px between legend and buttons)
                 fig.update_layout(
-                    height=700,
-                    width=1000,
+                    height=1100,  # Increased height to accommodate extra space
+                    width=1200,
                     template='plotly_dark',
+                    margin=dict(l=100, r=100, t=100, b=350),  # Increased bottom margin
+                    
+                    # X-axis configuration
+                    xaxis=dict(
+                        title='Year',
+                        showline=True,
+                        showgrid=False,
+                        range=[1960, 2023],
+                        tickmode='linear',
+                        tick0=1960,
+                        dtick=10,
+                        tickfont=dict(size=14),
+                        title_font=dict(size=16),
+                        ticklen=10,
+                        tickwidth=2,
+                        ticks='outside'
+                    ),
+                    
+                    # Y-axis configuration
+                    yaxis=dict(
+                        title='Value',
+                        showgrid=True,
+                        gridcolor='rgba(100, 100, 100, 0.3)',
+                        tickfont=dict(size=14),
+                        title_font=dict(size=16)
+                    ),
+                    
+                    # Legend positioned higher with more space below
                     legend=dict(
                         orientation="h",
-                        yanchor="bottom",
-                        y=-0.5,
+                        yanchor="top",
+                        y=-0.35,  # Higher position (was -0.4)
                         xanchor="center",
                         x=0.5,
                         font=dict(size=12),
-                        itemwidth=40
+                        itemwidth=40,
+                        bgcolor='rgba(0,0,0,0.5)'
                     ),
-                    margin=dict(b=200)
+                    
+                    # Buttons moved down (1 inch ≈ 100px below legend)
+                    updatemenus=[dict(
+                        type="buttons",
+                        showactive=True,
+                        buttons=[
+                            dict(label="▶️ PLAY", method="animate", args=[None]),
+                            dict(label="⏸️ PAUSE", method="animate", args=[[None], {"frame": {"duration": 0}}])
+                        ],
+                        x=0.1,
+                        xanchor="right",
+                        y=-0.5,  # Lower position (was -0.55)
+                        yanchor="top",
+                        pad=dict(t=20, b=20),
+                        bgcolor='rgba(0,0,0,0.7)'
+                    )],
+                    
+                    # Slider with adjusted spacing
+                    sliders=[dict(
+                        currentvalue={"prefix": "YEAR: ", "font": {"size": 14}},
+                        pad=dict(t=120, b=50),  # Increased top padding
+                        steps=[dict(args=[[str(year)], dict(mode="immediate")], 
+                              label=str(year), 
+                              method="animate") 
+                        for year in range(1960, 2024)]
+                    )]
                 )
+                
+                # Create animation frames
+                frames = []
+                for year in range(1960, 2024):
+                    frames.append(go.Frame(
+                        data=[go.Scatter(
+                            x=category_data[(category_data['Year'] <= year) & 
+                                          (category_data['Indicator Name'] == row['Indicator Name'])]['Year'],
+                            y=category_data[(category_data['Year'] <= year) & 
+                                          (category_data['Indicator Name'] == row['Indicator Name'])]['Value'],
+                        ) for _, row in available_indicators.iterrows()],
+                        name=str(year)
+                    ))
+                
+                fig.frames = frames
                 
                 st.plotly_chart(fig, use_container_width=True)
                 
+                # Add 2-inch gap before reference table
+                st.markdown("<div style='margin-top:100px;'></div>", unsafe_allow_html=True)
+                
+                # Create collapsible indicator code mapping table
+                with st.expander("Indicator Code Reference", expanded=False):
+                    mapping_table = available_indicators[['Indicator_Code', 'Indicator Name']] \
+                        .rename(columns={'Indicator_Code': 'Indicator Code'}) \
+                        .sort_values('Indicator Code') \
+                        .reset_index(drop=True)
+                    
+                    st.dataframe(
+                        mapping_table.style.apply(
+                            lambda x: ['background: #222222' if i%2==0 else 'background: #444444' 
+                                     for i in range(len(x))],
+                            axis=1
+                        ),
+                        use_container_width=True,
+                        height=min(400, 35 * len(mapping_table) + 38)
+                    )
+                
                 st.subheader("Raw Data")
                 st.dataframe(
-                    category_data[['Indicator Name', 'Year', 'Value']]
-                    .sort_values(['Indicator Name', 'Year'])
+                    category_data[['Indicator_Code', 'Indicator Name', 'Year', 'Value']]
+                    .rename(columns={'Indicator_Code': 'Indicator Code'})
+                    .sort_values(['Indicator Code', 'Year'])
                     .reset_index(drop=True),
                     use_container_width=True
                 )
             else:
                 st.warning(f"No data available for {category} indicators")
-                
+
 def show_category_analysis(data, category_name):
     """Unified category analysis function with fixed legend positioning"""
     initialize_page(category_name)
