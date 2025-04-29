@@ -1,10 +1,96 @@
 import streamlit as st
-from categories import categories  # Ensure categories is correctly imported
+from categories import categories
 
-# Function to set the background for the sidebar
-def set_sidebar_background(image_url):
+# Background images for each category
+SECTION_BACKGROUNDS = {
+    "Mortality Rates Analysis": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Mortality%20Rates.jpeg",
+    "Maternal and Child Health Analysis": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Maternal%20and%20Child%20Health.jpg",
+    "Infectious Diseases Analysis": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Infectious%20Diseases.jpg",
+    "Health Expenditure Analysis": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Health%20Expenditures.jpg",
+    "Healthcare Infrastructure and Services Analysis": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Healthcare%20Infrastructure%20and%20Services.jpg",
+    "Water, Sanitation and Hygiene Analysis": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Water%2C%20Sanitation%2C%20and%20Hygiene.png",
+    "Non-communicable Diseases and Risk Factors Analysis": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Non-communicable%20Diseases%20and%20Risk%20Factors.jpg",
+    "Nutrition and Food Security Analysis": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Nutrition%20and%20Food%20Security.jpg",
+    "Demographic Indicators Analysis": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Demographic%20Insights.jpg",
+    "Reproductive Health Analysis": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Reproductive%20Health.jpg",
+    "Civil Registration Analysis": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Civil%20Registration.jpg",
+    "Injury and External Causes Analysis": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Injury%20and%20External%20Causes.jpg"
+}
+
+def set_section_background(category):
+    image_url = SECTION_BACKGROUNDS.get(category)
+    if image_url:
+        st.markdown(f"""
+        <style>
+        /* Main app background with dark overlay */
+        .stApp {{
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        url('{image_url}') center/cover no-repeat fixed;
+        }}
+        
+        /* Main content area - semi-transparent dark container */
+        .main .block-container {{
+            background-color: rgba(30, 30, 30, 0.85) !important;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }}
+        
+        /* All text white by default */
+        .main .block-container * {{
+            color: #ffffff !important;
+        }}
+        
+        /* Headers with white color */
+        .main .block-container h1,
+        .main .block-container h2,
+        .main .block-container h3 {{
+            color: #ffffff !important;
+            border-bottom: 1px solid #555;
+            padding-bottom: 0.5rem;
+        }}
+        
+        /* Widget styling */
+        .stTextInput input, 
+        .stSelectbox select,
+        .stSlider .st-c7,
+        .stNumberInput input {{
+            background-color: rgba(45, 45, 45, 0.9) !important;
+            color: white !important;
+            border: 1px solid #555 !important;
+        }}
+        
+        /* Buttons */
+        .stButton>button {{
+            background-color: #1976d2 !important;
+            color: white !important;
+            border: none !important;
+        }}
+        
+        /* Dataframes */
+        .stDataFrame {{
+            background-color: rgba(45, 45, 45, 0.9) !important;
+        }}
+        
+        /* Markdown tables */
+        .main .block-container table {{
+            background-color: rgba(45, 45, 45, 0.9) !important;
+        }}
+        
+        /* Links */
+        .main .block-container a {{
+            color: #4fc3f7 !important;
+        }}
+        </style>
+        """, unsafe_allow_html=True)
+        
+def set_sidebar_background():
+    sidebar_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Sidebar.png"
     st.markdown(f"""
     <style>
+    /* Main sidebar container with background image */
     [data-testid="stSidebar"] {{
         position: relative;
     }}
@@ -16,7 +102,7 @@ def set_sidebar_background(image_url):
         left: 0;
         width: 100%;
         height: 100%;
-        background-image: url('{image_url}');
+        background-image: url('{sidebar_image_url}');
         background-size: cover;
         background-position: center;
         opacity: 0.3;
@@ -30,162 +116,123 @@ def set_sidebar_background(image_url):
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(255, 255, 255, 0.7);
+        background-color: rgba(0, 0, 0, 0.7);
         z-index: 1;
     }}
 
     [data-testid="stSidebar"] > * {{
         position: relative;
         z-index: 2;
-        color: #000000 !important;  /* Ensure all text is black */
+        color: #ffffff !important;
     }}
-
-    /* Make sure all text elements are black */
-    .st-emotion-cache-10trblm, 
-    .st-emotion-cache-1v0mbdj,
-    .stMarkdown, 
-    .stText,
-    .stSelectbox label,
-    .stRadio label,
-    .stSlider label,
-    .stMultiSelect label {{
-        color: #000000 !important;
+    
+    /* Remove white boxes behind filter labels */
+    [data-testid="stSidebar"] div[data-baseweb="base-input"] > div,
+    [data-testid="stSidebar"] div[data-baseweb="select"] > div,
+    [data-testid="stSidebar"] .stSlider label,
+    [data-testid="stSidebar"] .stRadio label {{
+        background-color: transparent !important;
     }}
-
-    /* Input fields */
-    .stTextInput input,
-    .stNumberInput input,
-    .stTextArea textarea {{
+    
+    /* Text elements - white with better contrast */
+    [data-testid="stSidebar"] * {{
+        color: #ffffff !important;
+    }}
+    
+    /* Input fields styling */
+    [data-testid="stSidebar"] .stTextInput input,
+    [data-testid="stSidebar"] .stSelectbox select,
+    [data-testid="stSidebar"] .stNumberInput input {{
         background-color: rgba(255, 255, 255, 0.9) !important;
         color: #000000 !important;
+        border: 1px solid #d0d0d0 !important;
+    }}
+    
+    /* Section headers */
+    [data-testid="stSidebar"] h1 {{
+        background-color: transparent !important;
+        font-size: 1.25rem;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.25rem;
+        color: #ffffff !important;
+    }}
+    
+    /* Proper spacing between filters */
+    [data-testid="stSidebar"] .stSlider,
+    [data-testid="stSidebar"] .stMultiSelect,
+    [data-testid="stSidebar"] .stSelectbox,
+    [data-testid="stSidebar"] .stRadio {{
+        margin-bottom: 1.25rem !important;
+        padding: 0.25rem 0 !important;
+    }}
+    
+    /* Remove extra padding in multiselect */
+    [data-testid="stSidebar"] .stMultiSelect > div > div {{
+        padding-top: 0 !important;
     }}
     </style>
     """, unsafe_allow_html=True)
 
-# Function to show the sidebar with filters
 def show_sidebar(health_data=None):
-    """Combined sidebar with navigation and filters"""
-    set_sidebar_background("https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Sidebar.png")
+    set_sidebar_background()
     
-    # Navigation Section
-    st.sidebar.title("Navigation")
-    
-    # Main sections (About, Overview, Data Analysis)
-    page = st.sidebar.radio("Go to", [
-        "About",
-        "Overview",
-        "Data Analysis",
-        "Comparative Insights"
-    ], key="main_page_selector")
+    with st.sidebar:
+        st.title("Navigation")
+        page = st.radio("Go to", [
+            "About",
+            "Overview",
+            "Data Analysis",
+            "Comparative Insights"
+        ], key="nav_radio")
 
-    # If Data Analysis is selected, show category selector
-    if page == "Data Analysis":
-        page = st.sidebar.selectbox(
-            "Select Category",
-            [
-                "Mortality Rates",
-                "Maternal and Child Health",
-                "Infectious Diseases",
-                "Health Expenditure",
-                "Healthcare Infrastructure and Services",
-                "Water, Sanitation, and Hygiene",
-                "Non-communicable Diseases and Risk Factors",
-                "Nutrition and Food Security",
-                "Demographic Indicators",
-                "Reproductive Health",
-                "Civil Registration",
-                "Injury and External Causes"
-                
-            ],
-            key="category_selector"
-        )
-    
-    # Initialize filters if they don't exist
-    if 'current_filters' not in st.session_state:
-        st.session_state.current_filters = {
-            'year_range': (1960, 2023),
-            'indicators': [],
-            'keyword': "All",
-            'category': "All",
-            'sort_order': "Ascending"
-        }
-    
-    # Always show filters
-    st.sidebar.title("Data Filters")
-    filters = create_data_filters(health_data)
-    st.session_state.current_filters = filters
-    
-    return page
+        if page == "Data Analysis":
+            st.markdown("---")
+            page = st.selectbox(
+                "Select Category",
+                [f"{cat} Analysis" for cat in categories.keys()],
+                key="category_select"
+            )
 
-# Function to create data filters (categories, keywords, indicators, etc.)
-def create_data_filters(health_data):
-    """Centralized filter controls with improved category handling"""
-    filters = {}
-    
-    # 1. Category filter
-    available_categories = list(categories.keys())
-    filters['categories'] = st.sidebar.multiselect(
-        "Select Categories", 
-        available_categories,
-        default=available_categories[:1],
-        help="Filter data by indicator categories",
-        key="category_select"
-    )
-    
-    # 2. Keyword filter
-    keyword_options = ["child", "female", "male", "birth", "mortality", "health", "population"]
-    filters['keywords'] = st.sidebar.multiselect(
-        "Filter by keywords", 
-        options=keyword_options,
-        default=[],
-        help="Narrow down indicators by keywords",
-        key="keyword_filter"
-    )
-
-    # 3. Indicator selection
-    indicators = []
-    if not filters['categories']:
-        for cat in categories.values():
-            indicators.extend(cat)
-    else:
-        for category in filters['categories']:
-            indicators.extend(categories.get(category, []))
-    
-    if filters['keywords']:
-        indicators = [ind for ind in indicators 
-                     if any(kw.lower() in ind.lower() for kw in filters['keywords'])]
-
-    indicators = sorted(list(set(indicators)))
-    
-    filters['indicators'] = st.sidebar.multiselect(
-        "Select Indicators", 
-        options=indicators,
-        default=indicators[:3] if len(indicators) > 3 else indicators,
-        key="indicator_select"
-    )
-
-    # 4. Year range
-    if health_data is not None:
-        years = sorted(health_data['Year'].unique())
-        filters['year_range'] = st.sidebar.slider(
+        st.markdown("---")
+        st.title("Data Filters")
+        
+        # Initialize filters dict
+        filters = {}
+        
+        # Year range filter
+        years = (1960, 2023) if health_data is None else (
+            int(health_data['Year'].min()), int(health_data['Year'].max()))
+        filters['year_range'] = st.slider(
             "Year Range",
-            min_value=int(min(years)),
-            max_value=int(max(years)),
-            value=(int(min(years)), int(max(years))),
-            key="year_slider"
+            min_value=years[0],
+            max_value=years[1],
+            value=years,
+            key="year_filter"
         )
-    else:
-        filters['year_range'] = (1960, 2023)  
-
-    # 5. Sort order - only show this once
-    if 'sort_order' not in st.session_state:
-        filters['sort_order'] = st.sidebar.radio(
+        
+        # Category filter
+        selected_categories = st.multiselect(
+            "Categories",
+            options=list(categories.keys()),
+            default=list(categories.keys())[:1],
+            key="category_filter"
+        )
+        
+        # Keyword filter
+        keywords = st.multiselect(
+            "Filter by keywords",
+            options=["child", "female", "male", "birth", "mortality"],
+            key="keyword_filter"
+        )
+        
+        # Sort order
+        sort_order = st.radio(
             "Sort Order",
             ["Ascending", "Descending"],
+            index=0,
             horizontal=True,
-            key="sort_order"
+            key="sort_filter"
         )
-    else:
-        filters['sort_order'] = st.session_state.sort_order
 
-    return filters
+    return page, filters
