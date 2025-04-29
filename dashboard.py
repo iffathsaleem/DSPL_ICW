@@ -48,7 +48,63 @@ def show_overview(health_data):
             st.metric("Data Points", len(health_data.dropna(subset=['Value'])))
             st.markdown('</div>', unsafe_allow_html=True)
 
-    # Category trends
+    # Animated bubble chart showing trends across all categories
+    st.subheader("Animated Trends Across Categories")
+    
+    # Prepare data for animation
+    animation_data = health_data.copy()
+    animation_data['Year'] = animation_data['Year'].astype(str)  # For proper animation
+    
+    # Create a mapping of indicators to categories
+    indicator_to_category = {}
+    for category, indicators in categories.items():
+        for indicator in indicators:
+            indicator_to_category[indicator] = category
+    
+    # Add category column to data
+    animation_data['Category'] = animation_data['Indicator Name'].map(indicator_to_category)
+    
+    # Create animated bubble chart
+    try:
+        fig = px.scatter(
+            animation_data.dropna(subset=['Value', 'Category']),
+            x="Year",
+            y="Value",
+            animation_frame="Year",
+            size="Value",
+            color="Category",
+            hover_name="Indicator Name",
+            size_max=60,
+            range_y=[0, animation_data['Value'].max() * 1.1],
+            height=700,
+            template='plotly_dark',
+            title="Health Indicators Trend Animation"
+        )
+        
+        # Improve animation settings
+        fig.layout.updatemenus[0].buttons[0].args[1]["frame"]["duration"] = 1000
+        fig.layout.updatemenus[0].buttons[0].args[1]["transition"]["duration"] = 500
+        
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception as e:
+        st.error(f"Could not create animated chart: {str(e)}")
+        st.write("Showing static visualization instead")
+        
+        # Fallback to static visualization
+        fig = px.scatter(
+            animation_data.dropna(subset=['Value', 'Category']),
+            x="Year",
+            y="Value",
+            color="Category",
+            hover_name="Indicator Name",
+            size="Value",
+            size_max=60,
+            height=700,
+            template='plotly_dark'
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+    # Category trends (your existing code)
     st.subheader("Category Trends")
     tabs = st.tabs(list(categories.keys()))
     
@@ -69,6 +125,7 @@ def show_overview(health_data):
                 
                 for i, indicator in enumerate(available_indicators):
                     indicator_data = category_data[category_data['Indicator Name'] == indicator]
+                    color = colors[i % len(colors)]
                     fig.add_trace(go.Scatter(
                         x=indicator_data['Year'],
                         y=indicator_data['Value'],
@@ -76,30 +133,28 @@ def show_overview(health_data):
                         mode='lines+markers',
                         marker=dict(size=8),
                         line=dict(width=3),
-                        marker_color=colors[i],
-                        line_color=colors[i]
+                        marker_color=color,
+                        line_color=color
                     ))
                 
-                # Update layout with better legend and size
                 fig.update_layout(
-                    height=700,  # Increased height
-                    width=1000,  # Increased width
+                    height=700,
+                    width=1000,
                     template='plotly_dark',
                     legend=dict(
                         orientation="h",
                         yanchor="bottom",
-                        y=-0.5,  # Move legend further down
+                        y=-0.5,
                         xanchor="center",
                         x=0.5,
-                        font=dict(size=12),  # Larger font
-                        itemwidth=40  # More space between legend items
+                        font=dict(size=12),
+                        itemwidth=40
                     ),
-                    margin=dict(b=200)  # More bottom margin for legend
+                    margin=dict(b=200)
                 )
                 
                 st.plotly_chart(fig, use_container_width=True)
                 
-                # Raw data display
                 st.subheader("Raw Data")
                 st.dataframe(
                     category_data[['Indicator Name', 'Year', 'Value']]
@@ -109,7 +164,7 @@ def show_overview(health_data):
                 )
             else:
                 st.warning(f"No data available for {category} indicators")
-
+                
 def show_category_analysis(data, category_name):
     """Unified category analysis function with fixed legend positioning"""
     initialize_page(category_name)
