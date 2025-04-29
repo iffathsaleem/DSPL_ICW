@@ -2598,28 +2598,6 @@ Year,Indicator Name,Value,Indicator_Code,is_percentage
 2002,"Domestic private health expenditure per capita, PPP (current international $)",91.0,IND_136,False
 2001,"Domestic private health expenditure per capita, PPP (current international $)",88.0,IND_136,False
 2000,"Domestic private health expenditure per capita, PPP (current international $)",80.0,IND_136,False
-2023,Net migration,-28011.0,IND_137,False
-2022,Net migration,-27435.0,IND_137,False
-2021,Net migration,-29586.0,IND_137,False
-2020,Net migration,-29875.0,IND_137,False
-2019,Net migration,-28426.0,IND_137,False
-2018,Net migration,-28607.0,IND_137,False
-2017,Net migration,-22324.0,IND_137,False
-2016,Net migration,-18388.0,IND_137,False
-2015,Net migration,-29797.0,IND_137,False
-2014,Net migration,-33672.0,IND_137,False
-2013,Net migration,-37754.0,IND_137,False
-2012,Net migration,-41955.0,IND_137,False
-2011,Net migration,-90839.0,IND_137,False
-2010,Net migration,-98060.0,IND_137,False
-2009,Net migration,-81130.0,IND_137,False
-2008,Net migration,-97144.0,IND_137,False
-2007,Net migration,-109695.0,IND_137,False
-2006,Net migration,-107045.0,IND_137,False
-2005,Net migration,-118594.0,IND_137,False
-2004,Net migration,-84795.0,IND_137,False
-2003,Net migration,-107573.0,IND_137,False
-2002,Net migration,-105718.0,IND_137,False
 2001,Net migration,19273.0,IND_137,False
 2000,Net migration,123894.0,IND_137,False
 1999,Net migration,138799.0,IND_137,False
@@ -2630,38 +2608,6 @@ Year,Indicator Name,Value,Indicator_Code,is_percentage
 1994,Net migration,8323.0,IND_137,False
 1993,Net migration,36232.0,IND_137,False
 1992,Net migration,88542.0,IND_137,False
-1991,Net migration,-1047.0,IND_137,False
-1990,Net migration,-195736.0,IND_137,False
-1989,Net migration,-33305.0,IND_137,False
-1988,Net migration,-58415.0,IND_137,False
-1987,Net migration,-63105.0,IND_137,False
-1986,Net migration,-26460.0,IND_137,False
-1985,Net migration,-80950.0,IND_137,False
-1984,Net migration,-225450.0,IND_137,False
-1983,Net migration,-209362.0,IND_137,False
-1982,Net migration,-163987.0,IND_137,False
-1981,Net migration,-89824.0,IND_137,False
-1980,Net migration,-63541.0,IND_137,False
-1979,Net migration,-57683.0,IND_137,False
-1978,Net migration,-50189.0,IND_137,False
-1977,Net migration,-45383.0,IND_137,False
-1976,Net migration,-41258.0,IND_137,False
-1975,Net migration,-37475.0,IND_137,False
-1974,Net migration,-33979.0,IND_137,False
-1973,Net migration,-30582.0,IND_137,False
-1972,Net migration,-27071.0,IND_137,False
-1971,Net migration,-22021.0,IND_137,False
-1970,Net migration,-16299.0,IND_137,False
-1969,Net migration,-10152.0,IND_137,False
-1968,Net migration,-7163.0,IND_137,False
-1967,Net migration,-6696.0,IND_137,False
-1966,Net migration,-6794.0,IND_137,False
-1965,Net migration,-7249.0,IND_137,False
-1964,Net migration,-7614.0,IND_137,False
-1963,Net migration,-8118.0,IND_137,False
-1962,Net migration,-8909.0,IND_137,False
-1961,Net migration,-10144.0,IND_137,False
-1960,Net migration,-12610.0,IND_137,False
 2023,Refugee population by country or territory of asylum,377.0,IND_138,False
 2022,Refugee population by country or territory of asylum,504.0,IND_138,False
 2021,Refugee population by country or territory of asylum,907.0,IND_138,False
@@ -7281,7 +7227,6 @@ Year,Indicator Name,Value,Indicator_Code,is_percentage
 1962,"Age dependency ratio, young (% of working-age population)",74.0289355709508,IND_221,True
 1961,"Age dependency ratio, young (% of working-age population)",74.505449135732,IND_221,True
 1960,"Age dependency ratio, young (% of working-age population)",74.7311618822029,IND_221,True
-2023,Population growth (annual %),-0.651320770103285,IND_222,True
 2022,Population growth (annual %),0.112772639779474,IND_222,True
 2021,Population growth (annual %),1.07544995696428,IND_222,True
 2020,Population growth (annual %),0.530626559530355,IND_222,True
@@ -7291,7 +7236,6 @@ Year,Indicator Name,Value,Indicator_Code,is_percentage
 2016,Population growth (annual %),1.13327749793807,IND_222,True
 2015,Population growth (annual %),0.91981102654886,IND_222,True
 2014,Population growth (annual %),0.933207942647201,IND_222,True
-2013,Population growth (annual %),-2.79968273298027,IND_222,True
 2012,Population growth (annual %),0.760628047767682,IND_222,True
 2011,Population growth (annual %),0.620507027958285,IND_222,True
 2010,Population growth (annual %),0.589181271319281,IND_222,True
