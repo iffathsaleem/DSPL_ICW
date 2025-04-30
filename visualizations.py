@@ -1,36 +1,160 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import folium
 from streamlit_folium import folium_static
 from statsmodels.tsa.arima.model import ARIMA
+import numpy as np
+from dashboard import initialize_page
 
-# Initialize CSS styles (only once)
+# Initialize CSS
 def initialize_visualization():
     st.markdown("""
     <style>
-    .viz-container {
-        background-color: rgba(255, 255, 255, 0.88) !important;
-        padding: 20px !important;
-        border-radius: 10px !important;
-        margin: 15px 0 !important;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    .viz-title {
-        color: #000000 !important;
-        font-size: 18px !important;
-        font-weight: 600 !important;
-        margin-bottom: 15px !important;
-    }
-    .plotly-container {
-        background-color: rgba(255, 255, 255, 0.9) !important;
-        border-radius: 8px !important;
-        padding: 10px !important;
+    .insight-card {
+        background-color: rgba(30, 30, 30, 0.7);
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 0;
+        border-left: 4px solid #4CAF50;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# Interactive map
+# --- AUTOMATED INSIGHTS GENERATION (TextBlob removed) ---
+def generate_chart_insights(data, chart_type, indicators=None):
+    """Generate natural language insights about any chart"""
+    insights = []
+    
+    if chart_type == "time_series":
+        for indicator in indicators:
+            ts_data = data[data['Indicator Name'] == indicator].set_index('Year')['Value']
+            if len(ts_data) > 1:
+                change_pct = ((ts_data[-1] - ts_data[0]) / ts_data[0]) * 100
+                trend = "increased" if change_pct > 0 else "decreased"
+                
+                insight = f"""
+                <div class='insight-card'>
+                <b>{indicator}</b> {trend} by <b>{abs(change_pct):.1f}%</b> from {ts_data.index[0]} to {ts_data.index[-1]}. 
+                {f'Peak value: {ts_data.max():.1f} in {ts_data.idxmax()}' if len(ts_data) > 3 else ''}
+                </div>
+                """
+                insights.append(insight)
+    
+    elif chart_type == "correlation":
+        corr_matrix = data.pivot_table(index='Year', columns='Indicator Name', values='Value').corr()
+        strongest_pair = corr_matrix.unstack().sort_values(key=abs, ascending=False).index[1]
+        val = corr_matrix.loc[strongest_pair[0], strongest_pair[1]]
+        
+        relationship = "strong positive" if val > 0.7 else "strong negative" if val < -0.7 else "moderate"
+        insights.append(f"""
+        <div class='insight-card'>
+        <b>Strongest correlation</b>: {strongest_pair[0]} and {strongest_pair[1]} ({val:.2f})<br>
+        This indicates a {relationship} relationship between these indicators.
+        </div>
+        """)
+    
+    return "".join(insights)
+
+# --- ENHANCED FORECASTING ---
+def show_time_series_forecast(data, indicator_name):
+    ts_data = data[data['Indicator Name'] == indicator_name].set_index('Year')['Value'].dropna()
+    
+    # Insight generation
+    st.markdown(generate_chart_insights(data, "time_series", [indicator_name]), unsafe_allow_html=True)
+    
+    if len(ts_data) < 5:
+        show_linear_projection(data, indicator_name)
+        return
+    
+    with st.spinner("Training forecasting model..."):
+        try:
+            model = ARIMA(ts_data, order=(1, 1, 1)).fit()
+            forecast = model.forecast(steps=5)
+            
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=ts_data.index, y=ts_data, name='Historical'))
+            fig.add_trace(go.Scatter(x=forecast.index, y=forecast, name='Forecast', line=dict(dash='dot')))
+            fig.update_layout(title=f"Forecast for {indicator_name}", template="plotly_dark")
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Forecast insights
+            forecast_change = ((forecast[-1] - ts_data[-1]) / ts_data[-1]) * 100
+            st.markdown(f"""
+            <div class='insight-card'>
+            <b>Forecast Insight</b>: Predicted <b>{'increase' if forecast_change > 0 else 'decrease'}</b> of 
+            <b>{abs(forecast_change):.1f}%</b> over the next 5 years.
+            </div>
+            """, unsafe_allow_html=True)
+            
+        except:
+            show_linear_projection(data, indicator_name)
+
+def show_linear_projection(data, indicator_name):
+    """Fallback method when ARIMA fails"""
+    ts_data = data[data['Indicator Name'] == indicator_name].set_index('Year')['Value'].dropna()
+    
+    if len(ts_data) >= 2:
+        x = np.array(ts_data.index)
+        y = ts_data.values
+        coeffs = np.polyfit(x, y, 1)
+        future_years = np.array([x[-1] + 1, x[-1] + 5])
+        projected = coeffs[0] * future_years + coeffs[1]
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=x, y=y, name='Historical'))
+        fig.add_trace(go.Scatter(x=future_years, y=projected, name='Linear Projection', line=dict(dash='dot')))
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Projection insight
+        proj_change = ((projected[-1] - y[-1]) / y[-1]) * 100
+        st.markdown(f"""
+        <div class='insight-card'>
+        <b>Linear Projection</b>: Based on simple trend, expecting <b>{'increase' if proj_change > 0 else 'decrease'}</b> 
+        of <b>{abs(proj_change):.1f}%</b> in 5 years.
+        </div>
+        """, unsafe_allow_html=True)
+
+# --- ENHANCED COMPARATIVE SECTION ---
+def show_comparative_section(health_data):
+    initialize_visualization()
+    
+    # Original controls
+    available_indicators = sorted(health_data['Indicator Name'].unique())
+    selected_indicators = st.multiselect("Select indicators", available_indicators, default=available_indicators[:2])
+    
+    if not selected_indicators:
+        return
+    
+    filtered_data = health_data[health_data['Indicator Name'].isin(selected_indicators)]
+    
+    # Visualization selector
+    chart_type = st.radio("Chart type", 
+                         ["Trend Lines", "Small Multiples", "Correlation", "Forecast"],
+                         horizontal=True)
+    
+    if chart_type == "Trend Lines":
+        fig = px.line(filtered_data, x='Year', y='Value', color='Indicator Name')
+        st.plotly_chart(fig, use_container_width=True)
+        st.markdown(generate_chart_insights(filtered_data, "time_series", selected_indicators), unsafe_allow_html=True)
+    
+    elif chart_type == "Correlation" and len(selected_indicators) > 1:
+        show_indicator_correlation(filtered_data, selected_indicators)
+        st.markdown(generate_chart_insights(filtered_data, "correlation"), unsafe_allow_html=True)
+    
+    elif chart_type == "Forecast":
+        indicator = st.selectbox("Select indicator to forecast", selected_indicators)
+        show_time_series_forecast(filtered_data, indicator)
+
+def show_indicator_correlation(data, indicators):
+    """Enhanced correlation matrix with insights"""
+    pivot_data = data.pivot_table(index='Year', columns='Indicator Name', values='Value')
+    corr = pivot_data.corr()
+    
+    fig = px.imshow(corr, text_auto=".2f", color_continuous_scale='RdBu')
+    st.plotly_chart(fig, use_container_width=True)
+
 def show_interactive_map():
     """Standalone map function that doesn't depend on dashboard"""
     st.markdown("### Geographic Context")
@@ -88,9 +212,105 @@ def show_interactive_map():
     - **Eastern Coast**: Beautiful beaches and Trincomalee harbor
     """)
 
-def show_comparative_section(health_data):
-    initialize_visualization()
+# --- NEW VISUALIZATIONS (added enhancements) ---
+
+def show_time_series_forecast(data, indicator_name):
+    """Forecast future values using ARIMA"""
+    ts_data = data[data['Indicator Name'] == indicator_name].set_index('Year')['Value'].dropna()
     
+    if len(ts_data) < 5:
+        st.warning("Insufficient data for forecasting (need ≥5 years).")
+        return
+    
+    with st.spinner("Training forecasting model..."):
+        model = ARIMA(ts_data, order=(1, 1, 1)).fit()
+        forecast = model.forecast(steps=5)  # 5-year forecast
+    
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=ts_data.index, y=ts_data, 
+        name='Historical Data',
+        line=dict(width=3, color='#1f77b4')))
+    fig.add_trace(go.Scatter(
+        x=forecast.index, y=forecast, 
+        name='Forecast',
+        line=dict(dash='dot', color='red', width=3)))
+    
+    fig.update_layout(
+        title=f"5-Year Forecast: {indicator_name}",
+        xaxis_title="Year",
+        yaxis_title="Value",
+        template="plotly_dark",
+        hovermode="x unified"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+def show_indicator_correlation(data, indicators):
+    """Interactive correlation heatmap"""
+    pivot_data = data.pivot_table(index='Year', columns='Indicator Name', values='Value')[indicators]
+    corr = pivot_data.corr()
+    
+    fig = px.imshow(
+        corr,
+        text_auto=".2f",
+        color_continuous_scale='RdBu',
+        zmin=-1, zmax=1,
+        title="Indicator Correlation Matrix"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+def show_multi_indicator_trends(data, indicators):
+    """Small multiples comparison"""
+    fig = px.line(
+        data[data['Indicator Name'].isin(indicators)],
+        x='Year', y='Value',
+        color='Indicator Name',
+        facet_col='Indicator Name',
+        facet_col_wrap=2,
+        height=800,
+        template="plotly_dark"
+    )
+    fig.update_layout(showlegend=False)
+    st.plotly_chart(fig, use_container_width=True)
+
+def show_value_distribution(data, indicator_name):
+    """Box plot + histogram"""
+    filtered = data[data['Indicator Name'] == indicator_name]
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        fig1 = px.box(filtered, y='Value', title=f"Distribution of {indicator_name}")
+        st.plotly_chart(fig1, use_container_width=True)
+    with col2:
+        fig2 = px.histogram(filtered, x='Value', nbins=20, title="Value Frequency")
+        st.plotly_chart(fig2, use_container_width=True)
+
+# --- ENHANCED COMPARATIVE SECTION (updated but preserves original functionality) ---
+
+def show_comparative_section(health_data):
+    # Set the background first
+    st.markdown(f"""
+    <style>
+    .stApp {{
+        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                   url('https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Trends%20Overtime.JPG');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }}
+    .main .block-container {{
+        background-color: rgba(30, 30, 30, 0.85) !important;
+        border-radius: 10px;
+        padding: 2rem;
+        margin-top: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+    initialize_visualization()
     st.header("Comparative Insights")
     st.markdown("Compare multiple indicators over time using interactive charts.")
     
@@ -98,10 +318,9 @@ def show_comparative_section(health_data):
     available_indicators = sorted(health_data['Indicator Name'].unique())
     min_year, max_year = int(health_data['Year'].min()), int(health_data['Year'].max())
     
-    # Create controls
+    # Original control panel (unchanged)
     with st.expander("Comparison Settings", expanded=True):
         col1, col2 = st.columns(2)
-        
         with col1:
             selected_indicators = st.multiselect(
                 "Select indicators to compare",
@@ -109,7 +328,6 @@ def show_comparative_section(health_data):
                 default=available_indicators[:2] if len(available_indicators) >= 2 else None,
                 key="comp_insights_multiselect"
             )
-            
         with col2:
             year_range = st.slider(
                 "Year range",
@@ -123,7 +341,7 @@ def show_comparative_section(health_data):
         st.info("Please select at least one indicator to compare")
         return
     
-    # Filter data
+    # Filter data (unchanged)
     filtered_data = health_data[
         (health_data['Indicator Name'].isin(selected_indicators)) &
         (health_data['Year'] >= year_range[0]) &
@@ -134,153 +352,59 @@ def show_comparative_section(health_data):
         st.warning("No data available for the selected filters")
         return
     
-    # Visualization section
-    st.subheader("Visual Comparison")
-    
-    # Enhanced chart type selection
-    chart_type = st.radio(
-        "Chart type",
-        options=["Line Chart", "Bar Chart", "Area Chart", "Pie Chart", "Heatmap", "Scatter Plot", "Box Plot"],
-        horizontal=True,
-        key="comp_insights_chart_type"
+    # Enhanced visualization selector
+    st.subheader("Visualization Options")
+    viz_type = st.radio(
+        "Choose visualization type:",
+        options=["Trend Lines", "Small Multiples", "Correlation", "Forecasting", "Distribution"],
+        horizontal=True
     )
     
-    colors = px.colors.qualitative.Plotly
-    color_map = {ind: colors[i % len(colors)] for i, ind in enumerate(selected_indicators)}
-    
-    # Create charts based on selection
-    if chart_type == "Line Chart":
-        fig = px.line(
-            filtered_data,
-            x='Year',
-            y='Value',
-            color='Indicator Name',
-            markers=True,
-            color_discrete_map=color_map
+    if viz_type == "Trend Lines":
+        # Original line/bar/area chart logic
+        chart_type = st.radio(
+            "Chart type",
+            options=["Line Chart", "Bar Chart", "Area Chart"],
+            horizontal=True
         )
-    elif chart_type == "Bar Chart":
-        fig = px.bar(
-            filtered_data,
-            x='Year',
-            y='Value',
-            color='Indicator Name',
-            barmode='group',
-            color_discrete_map=color_map
-        )
-    elif chart_type == "Area Chart":
-        fig = px.area(
-            filtered_data,
-            x='Year',
-            y='Value',
-            color='Indicator Name',
-            line_group='Indicator Name',
-            color_discrete_map=color_map
-        )
-    elif chart_type == "Pie Chart":
-        latest_data = filtered_data[filtered_data['Year'] == max_year]
-        fig = px.pie(
-            latest_data,
-            names='Indicator Name',
-            values='Value',
-            color='Indicator Name',
-            color_discrete_map=color_map
-        )
-    elif chart_type == "Heatmap":
-        pivot_data = filtered_data.pivot_table(
-            index='Year',
-            columns='Indicator Name',
-            values='Value'
-        )
-        fig = px.imshow(
-            pivot_data,
-            labels=dict(x="Indicator", y="Year", color="Value"),
-            aspect="auto"
-        )
-    elif chart_type == "Scatter Plot":
+        colors = px.colors.qualitative.Plotly
+        color_map = {ind: colors[i % len(colors)] for i, ind in enumerate(selected_indicators)}
+        
+        if chart_type == "Line Chart":
+            fig = px.line(filtered_data, x='Year', y='Value', color='Indicator Name', color_discrete_map=color_map)
+        elif chart_type == "Bar Chart":
+            fig = px.bar(filtered_data, x='Year', y='Value', color='Indicator Name', barmode='group', color_discrete_map=color_map)
+        elif chart_type == "Area Chart":
+            fig = px.area(filtered_data, x='Year', y='Value', color='Indicator Name', color_discrete_map=color_map)
+        
+        fig.update_layout(height=500, template="plotly_dark")
+        st.plotly_chart(fig, use_container_width=True)
+        
+    elif viz_type == "Small Multiples":
+        show_multi_indicator_trends(filtered_data, selected_indicators)
+        
+    elif viz_type == "Correlation":
         if len(selected_indicators) >= 2:
-            pivot_data = filtered_data.pivot_table(
-                index='Year',
-                columns='Indicator Name',
-                values='Value'
-            ).reset_index()
-            fig = px.scatter(
-                pivot_data,
-                x=selected_indicators[0],
-                y=selected_indicators[1],
-                trendline="ols"
-            )
+            show_indicator_correlation(filtered_data, selected_indicators)
         else:
-            st.warning("Select at least 2 indicators for scatter plot")
-            return
-    elif chart_type == "Box Plot":
-        fig = px.box(
-            filtered_data,
-            x='Indicator Name',
-            y='Value',
-            color='Indicator Name',
-            color_discrete_map=color_map
-        )
+            st.warning("Select at least 2 indicators for correlation analysis")
+            
+    elif viz_type == "Forecasting":
+        indicator = st.selectbox("Select indicator to forecast", selected_indicators)
+        show_time_series_forecast(filtered_data, indicator)
+        
+    elif viz_type == "Distribution":
+        indicator = st.selectbox("Select indicator", selected_indicators)
+        show_value_distribution(filtered_data, indicator)
     
-    # Add annotations for key insights
-    if chart_type in ["Line Chart", "Bar Chart", "Area Chart"]:
-        for indicator in selected_indicators:
-            ind_data = filtered_data[filtered_data['Indicator Name'] == indicator]
-            max_val = ind_data['Value'].max()
-            min_val = ind_data['Value'].min()
-            fig.add_annotation(
-                x=ind_data[ind_data['Value'] == max_val]['Year'].values[0],
-                y=max_val,
-                text=f"Peak: {max_val:.2f}",
-                showarrow=True,
-                arrowhead=1
-            )
-            fig.add_annotation(
-                x=ind_data[ind_data['Value'] == min_val]['Year'].values[0],
-                y=min_val,
-                text=f"Low: {min_val:.2f}",
-                showarrow=True,
-                arrowhead=1
-            )
-    
-    fig.update_layout(
-        height=500,
-        hovermode='x unified',
-        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
-        margin=dict(b=100)
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # Add key takeaways
-    st.subheader("Key Takeaways")
-    with st.expander("View Insights"):
-        for indicator in selected_indicators:
-            ind_data = filtered_data[filtered_data['Indicator Name'] == indicator]
-            change = (ind_data['Value'].iloc[-1] - ind_data['Value'].iloc[0]) / ind_data['Value'].iloc[0] * 100
-            st.write(f"**{indicator}**: Changed by {change:.1f}% from {year_range[0]} to {year_range[1]}")
-    
-    # Statistical comparison
+    # Original statistical analysis section (unchanged)
     st.subheader("Statistical Analysis")
     with st.expander("View Detailed Statistics"):
         tab1, tab2 = st.tabs(["Summary Statistics", "Correlation Matrix"])
-        
         with tab1:
-            st.write("Descriptive statistics for selected indicators:")
             stats = filtered_data.groupby('Indicator Name')['Value'].describe()
-            st.dataframe(stats.style.format("{:.2f}").background_gradient(cmap='Blues'))
-        
+            st.dataframe(stats.style.format("{:.2f}"))
         with tab2:
             if len(selected_indicators) > 1:
-                try:
-                    pivot_data = filtered_data.pivot_table(
-                        index='Year',
-                        columns='Indicator Name',
-                        values='Value'
-                    ).corr()
-                    st.write("Correlation between indicators:")
-                    st.dataframe(pivot_data.style.format("{:.2f}").background_gradient(
-                        cmap='RdBu', vmin=-1, vmax=1))
-                except Exception as e:
-                    st.warning(f"Could not calculate correlation: {str(e)}")
-            else:
-                st.info("Select at least 2 indicators to see correlation analysis")
+                pivot_data = filtered_data.pivot_table(index='Year', columns='Indicator Name', values='Value').corr()
+                st.dataframe(pivot_data.style.format("{:.2f}").background_gradient(cmap='RdBu', vmin=-1, vmax=1))

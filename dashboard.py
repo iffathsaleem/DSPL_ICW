@@ -9,6 +9,7 @@ from sidebar import SECTION_BACKGROUNDS, set_section_background
 background_images = {
     "About": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/About.jpg",
     "Overview": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Overview.jpg",
+    "Comparative Insights": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Trends%20Overtime.JPG",
     **SECTION_BACKGROUNDS  # Merge with section-specific backgrounds
 }
 
@@ -386,4 +387,17 @@ def show_injury_causes(data):
     show_category_analysis(data, "Injury and External Causes Analysis")
 
 def show_dashboard(data):
+    # Add this to ensure background styling is applied
+    st.markdown(f"""
+    <style>
+    .stApp {{
+        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                   url('{background_images.get("Comparative Insights", "")}');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
     st.markdown("---")
