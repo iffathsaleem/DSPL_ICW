@@ -1,18 +1,18 @@
-    import streamlit as st
-    import pandas as pd
-    from sidebar import show_sidebar, set_section_background,SECTION_BACKGROUNDS
-    from dashboard import (
+import streamlit as st
+import pandas as pd
+from sidebar import show_sidebar, set_section_background,SECTION_BACKGROUNDS
+from dashboard import (
         show_overview,
         show_health_expenditure_insights,
         show_category_analysis
     )
-    from about import show_about
-    from categories import categories, map_category
-    from visualizations import show_interactive_map, show_comparative_section
+from about import show_about
+from categories import categories, map_category
+from visualizations import show_interactive_map, show_comparative_section
 
 
-    @st.cache_data
-    def load_data():
+@st.cache_data
+def load_data():
         try:
             health = pd.read_csv("Sri Lanka Health Statistics.csv")
             health["Value"] = pd.to_numeric(health["Value"], errors='coerce')
@@ -23,7 +23,7 @@
             st.error(f"Error loading data: {str(e)}")
             return pd.DataFrame()
 
-    def apply_filters(data, filters):
+def apply_filters(data, filters):
         if not filters or data.empty:
             return data
         
@@ -36,7 +36,7 @@
         
         return filtered.sort_values("Year")
 
-    def main():
+def main():
         st.set_page_config(
             layout="wide",
             page_title="Sri Lanka Health Dashboard",
@@ -68,5 +68,5 @@
         else:
             st.error(f"Page '{page}' not configured")
 
-    if __name__ == "__main__":
+if __name__ == "__main__":
         main()
