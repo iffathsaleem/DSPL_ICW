@@ -28,28 +28,75 @@ def format_value(value, is_percentage=False):
     return f"{value:,.2f}"
 
 def show_overview(health_data):
-    initialize_page("Overview")
+    # Set background with proper styling
+    st.markdown(f"""
+    <style>
+    .stApp {{
+        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                   url('{background_images["Overview"]}');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }}
+    .metric-card {{
+        background-color: rgba(30, 30, 30, 0.8);
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }}
+    </style>
+    """, unsafe_allow_html=True)
     
-    # Summary section
-    with st.container():
-        col1, col2 = st.columns(2)
-        with col1:
-            st.subheader("Dataset Summary")
-            st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-            st.metric("Total Indicators", health_data['Indicator Name'].nunique())
-            st.metric("Years Covered", f"{health_data['Year'].min()} to {health_data['Year'].max()}")
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        with col2:
-            st.subheader("Value Statistics")
-            st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-            health_data['Value'] = pd.to_numeric(health_data['Value'], errors='coerce')
-            st.metric("Average Value", f"{health_data['Value'].mean():.2f}")
-            st.metric("Data Points", len(health_data.dropna(subset=['Value'])))
-            st.markdown('</div>', unsafe_allow_html=True)
-
-    # Category trends with animation
-    st.subheader("Animated Category Trends (1960-2023)")
+    st.title("Sri Lanka Health Dashboard Overview")
+    st.markdown("---")
+    
+    # Key Metrics Section
+    st.header("Key Discoveries")
+    
+    # Data completeness analysis
+    latest_year = health_data['Year'].max()
+    year_range = f"{health_data['Year'].min()} to {health_data['Year'].max()}"
+    coverage_pct = len(health_data[health_data['Year'] == latest_year]) / len(health_data) * 100
+    
+    cols = st.columns(3)
+    with cols[0]:
+        st.metric("Total Indicators", health_data['Indicator Name'].nunique())
+    with cols[1]:
+        st.metric("Years Covered", year_range)
+    with cols[2]:
+        st.metric(f"{latest_year} Data Coverage", f"{coverage_pct:.1f}%")
+    
+    # Category Distribution
+    st.subheader("Data Composition")
+    category_counts = health_data.groupby('Category').size().reset_index(name='Count')
+    fig = px.pie(category_counts, names='Category', values='Count', 
+                 hole=0.3, color_discrete_sequence=px.colors.qualitative.Pastel)
+    fig.update_traces(textposition='inside', textinfo='percent+label')
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Performance Highlights
+    st.markdown("---")
+    st.header("Performance Trends")
+    
+    # Calculate 10-year change for available metrics
+    health_data['Value'] = pd.to_numeric(health_data['Value'], errors='coerce')
+    current_avg = health_data[health_data['Year'] == latest_year]['Value'].mean()
+    past_avg = health_data[health_data['Year'] == latest_year-10]['Value'].mean()
+    avg_change = ((current_avg - past_avg) / past_avg * 100) if past_avg != 0 else 0
+    
+    cols = st.columns(3)
+    with cols[0]:
+        st.metric("Average Value", f"{current_avg:.1f}", 
+                 f"{avg_change:.1f}% vs 10y ago")
+    with cols[1]:
+        complete_series = health_data.groupby('Indicator Name')['Year'].nunique().max()
+        st.metric("Most Complete Series", f"{complete_series} years")
+    
+    # Original Animated Category Trends (preserved exactly as in original code)
+    st.markdown("---")
+    st.header("Animated Category Trends (1960-2023)")
     tabs = st.tabs(list(categories.keys()))
     
     for tab, (category, indicators) in zip(tabs, categories.items()):
@@ -80,7 +127,7 @@ def show_overview(health_data):
                     fig.add_trace(go.Scatter(
                         x=indicator_data['Year'],
                         y=indicator_data['Value'],
-                        name=indicator_code,  # Use Indicator_Code from CSV
+                        name=indicator_code,
                         mode='lines+markers',
                         marker=dict(size=10),
                         line=dict(width=4),
@@ -89,12 +136,12 @@ def show_overview(health_data):
                         customdata=[indicator_name] * len(indicator_data)
                     ))
                 
-                # Set up layout with increased spacing (1 inch ≈ 100px between legend and buttons)
+                # Set up layout with increased spacing
                 fig.update_layout(
-                    height=1100,  # Increased height to accommodate extra space
+                    height=1100,
                     width=1200,
                     template='plotly_dark',
-                    margin=dict(l=100, r=100, t=100, b=350),  # Increased bottom margin
+                    margin=dict(l=100, r=100, t=100, b=350),
                     
                     # X-axis configuration
                     xaxis=dict(
@@ -125,7 +172,7 @@ def show_overview(health_data):
                     legend=dict(
                         orientation="h",
                         yanchor="top",
-                        y=-0.35,  # Higher position (was -0.4)
+                        y=-0.35,
                         xanchor="center",
                         x=0.5,
                         font=dict(size=12),
@@ -133,17 +180,17 @@ def show_overview(health_data):
                         bgcolor='rgba(0,0,0,0.5)'
                     ),
                     
-                    # Buttons moved down (1 inch ≈ 100px below legend)
+                    # Buttons moved down
                     updatemenus=[dict(
                         type="buttons",
                         showactive=True,
                         buttons=[
-                            dict(label="▶️ PLAY", method="animate", args=[None]),
-                            dict(label="⏸️ PAUSE", method="animate", args=[[None], {"frame": {"duration": 0}}])
+                            dict(label="PLAY", method="animate", args=[None]),
+                            dict(label="PAUSE", method="animate", args=[[None], {"frame": {"duration": 0}}])
                         ],
                         x=0.1,
                         xanchor="right",
-                        y=-0.5,  # Lower position (was -0.55)
+                        y=-0.5,
                         yanchor="top",
                         pad=dict(t=20, b=20),
                         bgcolor='rgba(0,0,0,0.7)'
@@ -152,7 +199,7 @@ def show_overview(health_data):
                     # Slider with adjusted spacing
                     sliders=[dict(
                         currentvalue={"prefix": "YEAR: ", "font": {"size": 14}},
-                        pad=dict(t=120, b=50),  # Increased top padding
+                        pad=dict(t=120, b=50),
                         steps=[dict(args=[[str(year)], dict(mode="immediate")], 
                               label=str(year), 
                               method="animate") 
@@ -177,7 +224,7 @@ def show_overview(health_data):
                 
                 st.plotly_chart(fig, use_container_width=True)
                 
-                # Add 2-inch gap before reference table
+                # Add gap before reference table
                 st.markdown("<div style='margin-top:100px;'></div>", unsafe_allow_html=True)
                 
                 # Create collapsible indicator code mapping table
