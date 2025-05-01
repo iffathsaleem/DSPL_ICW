@@ -2,6 +2,8 @@
 
 An interactive dashboard visualizing key health indicators for Sri Lanka (1960-2023) with animated trends, comparative analysis, and geographic context.
 
+https://srilankahealthdashboard.streamlit.app/
+
 ## Features
 
 ### Animated Visualizations
