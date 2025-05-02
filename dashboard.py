@@ -350,7 +350,7 @@ def show_category_analysis(data, category_name):
         st.metric(f"{latest_year} Coverage", f"{latest_coverage:.1f}%")
 
     st.markdown("---")
-    st.header("Animated Trend Analysis (1960-2023)")
+    st.header("Trend Analysis")
     
     indicators = categories.get(category_name.replace(" Analysis", ""), [])
     if not indicators:
@@ -361,40 +361,31 @@ def show_category_analysis(data, category_name):
         (data['Indicator Name'].isin(indicators)) &
         (data['Value'].notna())
     ].copy()
-    category_data = category_data[(category_data['Year'] >= 1960) & (category_data['Year'] <= 2023)]
     
     if not category_data.empty:
         available_indicators = category_data[['Indicator Name', 'Indicator_Code']].drop_duplicates()
         
-        fig = go.Figure()
+        # Create static line chart
+        fig = px.line(
+            category_data,
+            x="Year",
+            y="Value",
+            color="Indicator_Code",
+            line_group="Indicator Name",
+            hover_name="Indicator Name",
+            labels={"Value": "Indicator Value", "Year": "Year"},
+            title=f"{category_name} Trends Over Time",
+            template="plotly_dark",
+            height=600
+        )
         
-        colors = px.colors.qualitative.Plotly
-        for i, row in available_indicators.iterrows():
-            indicator_data = category_data[category_data['Indicator Name'] == row['Indicator Name']]
-            
-            fig.add_trace(go.Scatter(
-                x=indicator_data['Year'],
-                y=indicator_data['Value'],
-                name=row['Indicator_Code'],
-                mode='lines+markers',
-                marker=dict(size=10),
-                line=dict(width=4),
-                marker_color=colors[i % len(colors)],
-                hovertemplate=f"{row['Indicator Name']}<br>Year: %{{x}}<br>Value: %{{y}}<extra></extra>"
-            ))
-        
+        # Update layout for better readability
         fig.update_layout(
-            height=800,
-            template='plotly_dark',
-            margin=dict(l=100, r=100, t=100, b=250),
+            margin=dict(l=100, r=100, t=100, b=100),
             xaxis=dict(
                 title='Year',
                 showline=True,
                 showgrid=False,
-                range=[1960, 2023],
-                tickmode='linear',
-                tick0=1960,
-                dtick=10,
                 tickfont=dict(size=14),
                 title_font=dict(size=16),
                 ticklen=10,
@@ -409,53 +400,18 @@ def show_category_analysis(data, category_name):
                 title_font=dict(size=16)
             ),
             legend=dict(
+                title='Indicator Codes',
                 orientation="h",
-                yanchor="top",
-                y=-0.6,
+                yanchor="bottom",
+                y=-0.3,
                 xanchor="center",
                 x=0.5,
                 font=dict(size=10),
-                itemwidth=30,
-                bgcolor='rgba(0,0,0,0.5)',
-                itemsizing='constant'
+                bgcolor='rgba(0,0,0,0.5)'
             ),
-            updatemenus=[dict(
-                type="buttons",
-                showactive=True,
-                buttons=[
-                    dict(label="PLAY", method="animate", args=[None]),
-                    dict(label="PAUSE", method="animate", args=[[None], {"frame": {"duration": 0}}])
-                ],
-                x=0.1,
-                xanchor="right",
-                y=-0.8,
-                yanchor="top",
-                pad=dict(t=20, b=20),
-                bgcolor='rgba(0,0,0,0.7)'
-            )],
-            sliders=[dict(
-                currentvalue={"prefix": "YEAR: ", "font": {"size": 14}},
-                pad=dict(t=120, b=150),
-                steps=[dict(args=[[str(year)], dict(mode="immediate")], 
-                      label=str(year), 
-                      method="animate") 
-                for year in range(1960, 2024)]
-            )]
+            hovermode='x unified'
         )
         
-        frames = []
-        for year in range(1960, 2024):
-            frames.append(go.Frame(
-                data=[go.Scatter(
-                    x=category_data[(category_data['Year'] <= year) & 
-                                  (category_data['Indicator Name'] == row['Indicator Name'])]['Year'],
-                    y=category_data[(category_data['Year'] <= year) & 
-                                  (category_data['Indicator Name'] == row['Indicator Name'])]['Value'],
-                ) for _, row in available_indicators.iterrows()],
-                name=str(year)
-            ))
-        
-        fig.frames = frames
         st.plotly_chart(fig, use_container_width=True)
         
         st.markdown("---")
@@ -470,64 +426,64 @@ def show_category_analysis(data, category_name):
             height=min(400, 35 * len(mapping_table) + 38)
         )
 
-    st.markdown("---")
-    st.header("Yearly Distribution")
-    all_years = sorted(data['Year'].unique())
-    selected_years = st.multiselect(
-        "Select years to display:",
-        options=all_years,
-        default=all_years[:5] + all_years[-5:],
-        key=f"year_select_{category_name}"
-    )
-    
-    if selected_years:
-        for year in selected_years:
-            year_data = data[data['Year'] == year]
-            if not year_data.empty:
-                st.markdown(f"### {year} Distribution")
-                fig = px.pie(
-                    year_data,
-                    names='Indicator_Code',
-                    values='Value',
-                    hole=0.4,
-                    color_discrete_sequence=px.colors.qualitative.Pastel
-                )
-                fig.update_traces(
-                    hovertemplate="<b>%{label}</b><br>" + 
-                                year_data.set_index('Indicator_Code')['Indicator Name'].to_dict().get("%{label}", "") + 
-                                "<br>Value: %{value}<br>Percentage: %{percent}",
-                    textposition='inside',
-                    textinfo='percent+label'
-                )
-                st.plotly_chart(fig, use_container_width=True)
+        st.markdown("---")
+        st.header("Yearly Distribution")
+        all_years = sorted(data['Year'].unique())
+        selected_years = st.multiselect(
+            "Select years to display:",
+            options=all_years,
+            default=[all_years[0], all_years[len(all_years)//2], all_years[-1]],
+            key=f"year_select_{category_name}"
+        )
+        
+        if selected_years:
+            for year in selected_years:
+                year_data = data[data['Year'] == year]
+                if not year_data.empty:
+                    st.markdown(f"### {year} Distribution")
+                    fig = px.pie(
+                        year_data,
+                        names='Indicator_Code',
+                        values='Value',
+                        hole=0.4,
+                        color_discrete_sequence=px.colors.qualitative.Pastel
+                    )
+                    fig.update_traces(
+                        hovertemplate="<b>%{label}</b><br>" + 
+                                    year_data.set_index('Indicator_Code')['Indicator Name'].to_dict().get("%{label}", "") + 
+                                    "<br>Value: %{value}<br>Percentage: %{percent}",
+                        textposition='inside',
+                        textinfo='percent+label'
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown("---")
-    st.header("Latest Values")
-    latest_year = data['Year'].max()
-    latest_data = data[data['Year'] == latest_year]
-    if not latest_data.empty:
-        cols = st.columns(3)
-        for idx, row in latest_data.iterrows():
-            with cols[idx % 3]:
-                st.markdown(
-                    f"""
-                    <div class="metric-card">
-                        <h4>{row['Indicator Name']}</h4>
-                        <p class="indicator-value">{format_value(row['Value'])}</p>
-                        <p class="year-label">Year: {latest_year}</p>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+        st.markdown("---")
+        st.header("Latest Values")
+        latest_year = data['Year'].max()
+        latest_data = data[data['Year'] == latest_year]
+        if not latest_data.empty:
+            cols = st.columns(3)
+            for idx, row in latest_data.iterrows():
+                with cols[idx % 3]:
+                    st.markdown(
+                        f"""
+                        <div class="metric-card">
+                            <h4>{row['Indicator Name']}</h4>
+                            <p class="indicator-value">{format_value(row['Value'])}</p>
+                            <p class="year-label">Year: {latest_year}</p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
 
-    st.markdown("---")
-    st.header("Complete Dataset")
-    st.dataframe(
-        data[['Indicator_Code', 'Indicator Name', 'Year', 'Value', 'Category']]
-        .sort_values(['Indicator Name', 'Year']),
-        use_container_width=True,
-        height=500
-    )
+        st.markdown("---")
+        st.header("Complete Dataset")
+        st.dataframe(
+            data[['Indicator_Code', 'Indicator Name', 'Year', 'Value', 'Category']]
+            .sort_values(['Indicator Name', 'Year']),
+            use_container_width=True,
+            height=500
+        )
 
 def show_demographic_insights(data):
     show_category_analysis(data, "Demographic Indicators Analysis")

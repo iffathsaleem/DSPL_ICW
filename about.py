@@ -3,16 +3,13 @@ from visualizations import show_interactive_map
 
 def show_about():
     bg_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/About.jpg"
-
-    # Add background and dark overlay
+    
+    # Set background and text styles
     st.markdown(
         f"""
         <style>
         .stApp {{
-            background: linear-gradient(
-                rgba(0, 0, 0, 0.7), 
-                rgba(0, 0, 0, 0.7)
-            ), url("{bg_image_url}");
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url("{bg_image_url}");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -32,7 +29,6 @@ def show_about():
  
     # About Section
     with st.container():
-        st.markdown('<div class="about-container">', unsafe_allow_html=True)
         st.title("About This Dashboard")
         st.markdown("""
         ## Sri Lanka Health Insights Dashboard
@@ -62,10 +58,7 @@ def show_about():
 
         **Data Sources:** World Bank, Sri Lanka Health Ministry, and WHO datasets.
         """)
-        st.markdown('</div>', unsafe_allow_html=True)
 
     # Map Section
     with st.container():
-        st.markdown('<div class="about-container">', unsafe_allow_html=True)
         show_interactive_map()
-        st.markdown('</div>', unsafe_allow_html=True)

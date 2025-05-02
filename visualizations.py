@@ -6,26 +6,29 @@ import folium
 from streamlit_folium import folium_static
 from statsmodels.tsa.arima.model import ARIMA
 import numpy as np
+from dashboard import background_images
 
 def initialize_visualization():
-    st.markdown("""
+    st.markdown(f"""
     <style>
-    .stApp {
-        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7));
+    .stApp {{
+        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('{background_images["Comparative Insights"]}');
         background-size: cover;
         background-position: center;
-    }
-    .main .block-container {
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }}
+    .main .block-container {{
         background-color: rgba(30, 30, 30, 0.85) !important;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-    }
-    .insight-card {
+    }}
+    .insight-card {{
         background-color: rgba(30, 30, 30, 0.7);
         border-radius: 10px;
         padding: 15px;
         margin: 10px 0;
         border-left: 4px solid #4CAF50;
-    }
+    }}
     </style>
     """, unsafe_allow_html=True)
 
