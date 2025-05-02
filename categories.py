@@ -1,4 +1,4 @@
-categories ={
+categories = {
   "Mortality Rates": [
     "Birth rate, crude (per 1,000 people)",
     "Death rate, crude (per 1,000 people)",
@@ -288,8 +288,56 @@ categories ={
   ]
 }
 
+# Dictionary with category definitions
+category_definitions = {
+    "Mortality Rates": "Indicators related to death rates, including infant mortality, maternal mortality, and deaths from specific causes.",
+    
+    "Maternal and Child Health": "Indicators focused on the health of mothers, infants, and children, including pregnancy outcomes, child growth metrics, and maternal care.",
+    
+    "Infectious Diseases": "Data related to communicable diseases like HIV/AIDS, tuberculosis, malaria, and other infections, including prevalence, incidence, and treatment metrics.",
+    
+    "Health Expenditure": "Financial indicators concerning healthcare spending, including government expenditure, out-of-pocket costs, and healthcare-related poverty impacts.",
+    
+    "Healthcare Infrastructure and Services": "Metrics on healthcare system capacity, including hospital beds, healthcare workforce, and universal health coverage.",
+    
+    "Water, Sanitation and Hygiene": "Indicators related to access to clean water, sanitation facilities, and hygiene practices across different populations.",
+    
+    "Non-communicable Diseases and Risk Factors": "Data on chronic diseases and their risk factors, including diabetes, tobacco use, alcohol consumption, and related mortality.",
+    
+    "Nutrition and Food Security": "Metrics on food access, nutritional status, and food security across populations.",
+    
+    "Demographic Indicators": "Population statistics including age structure, life expectancy, migration patterns, and general demographic composition.",
+    
+    "Reproductive Health": "Indicators related to family planning, contraception access and use, and reproductive health services.",
+    
+    "Civil Registration": "Metrics on the documentation of vital events such as births and deaths across different populations.",
+    
+    "Injury and External Causes": "Data on injuries, accidents, and external causes of morbidity and mortality."
+}
+
 def map_category(indicator_name):
+    """
+    Maps health indicators to their respective categories based on predefined lists.
+    
+    Args:
+        indicator_name (str): The name of the health indicator
+        
+    Returns:
+        str: The category the indicator belongs to
+    """
     for category, indicators in categories.items():
         if indicator_name in indicators:
             return category
     return "Other"
+
+def get_category_definition(category_name):
+    """
+    Returns the definition for a given category.
+    
+    Args:
+        category_name (str): The name of the category
+        
+    Returns:
+        str: The definition of the category
+    """
+    return category_definitions.get(category_name, "No definition available for this category.")
