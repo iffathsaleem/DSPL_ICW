@@ -34,117 +34,110 @@ def initialize_visualization():
 
 def generate_chart_insights(data, chart_type, indicators=None):
     insights = []
-    
     if chart_type == "time_series":
         for indicator in indicators:
             ts_data = data[data['Indicator Name'] == indicator].set_index('Year')['Value']
             if len(ts_data) > 1:
-                change_pct = ((ts_data[-1] - ts_data[0]) / ts_data[0]) * 100
-                trend = "increased" if change_pct > 0 else "decreased"
-                insight = f"""
-                <div class='insight-card'>
-                <b>{indicator}</b> {trend} by <b>{abs(change_pct):.1f}%</b> from {ts_data.index[0]} to {ts_data.index[-1]}. 
-                {f'Peak value: {ts_data.max():.1f} in {ts_data.idxmax()}' if len(ts_data) > 3 else ''}
-                </div>
-                """
-                insights.append(insight)
-    
-    elif chart_type == "correlation":
-        corr_matrix = data.pivot_table(index='Year', columns='Indicator Name', values='Value').corr()
-        strongest_pair = corr_matrix.unstack().sort_values(key=abs, ascending=False).index[1]
-        val = corr_matrix.loc[strongest_pair[0], strongest_pair[1]]
-        relationship = "strong positive" if val > 0.7 else "strong negative" if val < -0.7 else "moderate"
-        insights.append(f"""
-        <div class='insight-card'>
-        <b>Strongest correlation</b>: {strongest_pair[0]} and {strongest_pair[1]} ({val:.2f})<br>
-        This indicates a {relationship} relationship between these indicators.
-        </div>
-        """)
-    
+                try:
+                    change_pct = ((ts_data.iloc[-1] - ts_data.iloc[0]) / ts_data.iloc[0]) * 100
+                    trend = "increased" if change_pct > 0 else "decreased"
+                    peak_val = f"Peak value: {ts_data.max():.1f} in {ts_data.idxmax()}" if len(ts_data) > 3 else ""
+                    insight = f"""<div class='insight-card'><b>{indicator}</b> {trend} by <b>{abs(change_pct):.1f}%</b> from {ts_data.index[0]} to {ts_data.index[-1]}. {peak_val}</div>"""
+                    insights.append(insight)
+                except Exception:
+                    insights.append(f"<div class='insight-card'>Insufficient data to analyze trend for {indicator}</div>")
+            else:
+                insights.append(f"<div class='insight-card'>Not enough data points to analyze trend for {indicator}</div>")
+    if chart_type == "correlation":
+        try:
+            corr_matrix = data.pivot_table(index='Year', columns='Indicator Name', values='Value').corr()
+            strongest_pair = corr_matrix.unstack().sort_values(key=abs, ascending=False).index[1]
+            val = corr_matrix.loc[strongest_pair[0], strongest_pair[1]]
+            relationship = "strong positive" if val > 0.7 else "strong negative" if val < -0.7 else "moderate"
+            insights.append(f"""<div class='insight-card'><b>Strongest correlation</b>: {strongest_pair[0]} and {strongest_pair[1]} ({val:.2f})<br>This indicates a {relationship} relationship between these indicators.</div>""")
+        except Exception:
+            insights.append("<div class='insight-card'>Could not calculate correlations</div>")
     return "".join(insights)
 
 def show_time_series_forecast(data, indicator_name):
-    ts_data = data[data['Indicator Name'] == indicator_name].set_index('Year')['Value'].dropna()
-    
-    st.markdown(generate_chart_insights(data, "time_series", [indicator_name]), unsafe_allow_html=True)
-    
-    if len(ts_data) < 5:
-        show_linear_projection(data, indicator_name)
-        return
-    
-    with st.spinner("Training forecasting model..."):
-        try:
-            model = ARIMA(ts_data, order=(1, 1, 1)).fit()
-            forecast = model.forecast(steps=5)
-            
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(x=ts_data.index, y=ts_data, name='Historical', line=dict(width=3, color='#1f77b4')))
-            fig.add_trace(go.Scatter(x=forecast.index, y=forecast, name='Forecast', line=dict(dash='dot', color='red', width=3)))
-            fig.update_layout(title=f"5-Year Forecast: {indicator_name}", template="plotly_dark")
-            st.plotly_chart(fig, use_container_width=True)
-            
-            forecast_change = ((forecast[-1] - ts_data[-1]) / ts_data[-1]) * 100
-            st.markdown(f"""
-            <div class='insight-card'>
-            <b>Forecast Insight</b>: Predicted <b>{'increase' if forecast_change > 0 else 'decrease'}</b> of 
-            <b>{abs(forecast_change):.1f}%</b> over the next 5 years.
-            </div>
-            """, unsafe_allow_html=True)
-            
-        except:
+    try:
+        ts_data = data[data['Indicator Name'] == indicator_name].set_index('Year')['Value'].dropna()
+        if len(ts_data) == 0:
+            st.warning(f"No data available for {indicator_name}")
+            return
+        st.markdown(generate_chart_insights(data, "time_series", [indicator_name]), unsafe_allow_html=True)
+        if len(ts_data) < 5:
             show_linear_projection(data, indicator_name)
+            return
+        with st.spinner("Training forecasting model..."):
+            try:
+                model = ARIMA(ts_data, order=(1, 1, 1)).fit()
+                forecast = model.forecast(steps=5)
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(x=ts_data.index, y=ts_data, name='Historical', line=dict(width=3, color='#1f77b4')))
+                fig.add_trace(go.Scatter(x=forecast.index, y=forecast, name='Forecast', line=dict(dash='dot', color='red', width=3)))
+                fig.update_layout(title=f"5-Year Forecast: {indicator_name}", template="plotly_dark", font=dict(color="white"), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+                st.plotly_chart(fig, use_container_width=True)
+                if len(ts_data) > 0:
+                    forecast_change = ((forecast.iloc[-1] - ts_data.iloc[-1]) / ts_data.iloc[-1]) * 100
+                    st.markdown(f"""<div class='insight-card'><b>Forecast Insight</b>: Predicted <b>{'increase' if forecast_change > 0 else 'decrease'}</b> of <b>{abs(forecast_change):.1f}%</b> over the next 5 years.</div>""", unsafe_allow_html=True)
+            except Exception:
+                show_linear_projection(data, indicator_name)
+    except Exception:
+        st.error("Error processing time series")
 
 def show_linear_projection(data, indicator_name):
-    ts_data = data[data['Indicator Name'] == indicator_name].set_index('Year')['Value'].dropna()
-    if len(ts_data) >= 2:
-        x = np.array(ts_data.index)
-        y = ts_data.values
-        coeffs = np.polyfit(x, y, 1)
-        future_years = np.array([x[-1] + 1, x[-1] + 5])
-        projected = coeffs[0] * future_years + coeffs[1]
-        
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=x, y=y, name='Historical'))
-        fig.add_trace(go.Scatter(x=future_years, y=projected, name='Linear Projection', line=dict(dash='dot')))
-        st.plotly_chart(fig, use_container_width=True)
-        
-        proj_change = ((projected[-1] - y[-1]) / y[-1]) * 100
-        st.markdown(f"""
-        <div class='insight-card'>
-        <b>Linear Projection</b>: Expecting <b>{'increase' if proj_change > 0 else 'decrease'}</b> 
-        of <b>{abs(proj_change):.1f}%</b> in 5 years.
-        </div>
-        """, unsafe_allow_html=True)
+    try:
+        ts_data = data[data['Indicator Name'] == indicator_name].set_index('Year')['Value'].dropna()
+        if len(ts_data) >= 2:
+            x = np.array(ts_data.index)
+            y = ts_data.values
+            coeffs = np.polyfit(x, y, 1)
+            future_years = np.array([x[-1] + 1, x[-1] + 5])
+            projected = coeffs[0] * future_years + coeffs[1]
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=x, y=y, name='Historical'))
+            fig.add_trace(go.Scatter(x=future_years, y=projected, name='Linear Projection', line=dict(dash='dot')))
+            fig.update_layout(template="plotly_dark", font=dict(color="white"))
+            st.plotly_chart(fig, use_container_width=True)
+            proj_change = ((projected[-1] - y[-1]) / y[-1]) * 100
+            st.markdown(f"""<div class='insight-card'><b>Linear Projection</b>: Expecting <b>{'increase' if proj_change > 0 else 'decrease'}</b> of <b>{abs(proj_change):.1f}%</b> in 5 years.</div>""", unsafe_allow_html=True)
+    except Exception:
+        st.error("Could not generate linear projection")
 
 def show_indicator_correlation(data, indicators):
-    pivot_data = data.pivot_table(index='Year', columns='Indicator Name', values='Value')[indicators]
-    corr = pivot_data.corr()
-    fig = px.imshow(corr, text_auto=".2f", color_continuous_scale='RdBu', zmin=-1, zmax=1)
-    st.plotly_chart(fig, use_container_width=True)
+    try:
+        pivot_data = data.pivot_table(index='Year', columns='Indicator Name', values='Value')[indicators]
+        corr = pivot_data.corr()
+        fig = px.imshow(corr, text_auto=".2f", color_continuous_scale='RdBu', zmin=-1, zmax=1)
+        fig.update_layout(template="plotly_dark", font=dict(color="white"))
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception:
+        st.error("Could not calculate correlations")
 
 def show_multi_indicator_trends(data, indicators):
-    fig = px.line(
-        data[data['Indicator Name'].isin(indicators)],
-        x='Year', y='Value',
-        color='Indicator Name',
-        facet_col='Indicator Name',
-        facet_col_wrap=2,
-        height=800,
-        template="plotly_dark"
-    )
-    fig.update_layout(showlegend=False)
-    st.plotly_chart(fig, use_container_width=True)
+    try:
+        fig = px.line(data[data['Indicator Name'].isin(indicators)], x='Year', y='Value', color='Indicator Name', facet_col='Indicator Name', facet_col_wrap=2, height=800)
+        fig.update_layout(template="plotly_dark", showlegend=False, font=dict(color="white"))
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception:
+        st.error("Could not display trends")
 
 def show_value_distribution(data, indicator_name):
-    filtered = data[data['Indicator Name'] == indicator_name]
-    col1, col2 = st.columns(2)
-    with col1:
-        fig1 = px.box(filtered, y='Value', title=f"Distribution of {indicator_name}")
-        st.plotly_chart(fig1, use_container_width=True)
-    with col2:
-        fig2 = px.histogram(filtered, x='Value', nbins=20, title="Value Frequency")
-        st.plotly_chart(fig2, use_container_width=True)
-
+    try:
+        filtered = data[data['Indicator Name'] == indicator_name]
+        col1, col2 = st.columns(2)
+        with col1:
+            fig1 = px.box(filtered, y='Value', title=f"Distribution of {indicator_name}")
+            fig1.update_layout(template="plotly_dark", font=dict(color="white"))
+            st.plotly_chart(fig1, use_container_width=True)
+        with col2:
+            fig2 = px.histogram(filtered, x='Value', nbins=20, title="Value Frequency")
+            fig2.update_layout(template="plotly_dark", font=dict(color="white"))
+            st.plotly_chart(fig2, use_container_width=True)
+    except Exception:
+        st.error("Could not show distribution")
+        
 def show_comparative_section(health_data):
     initialize_visualization()
     st.header("Comparative Insights")
