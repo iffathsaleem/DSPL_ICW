@@ -7,6 +7,7 @@ from streamlit_folium import folium_static
 from statsmodels.tsa.arima.model import ARIMA
 import numpy as np
 from dashboard import background_images
+from datetime import datetime
 
 def initialize_visualization():
     st.markdown(f"""
@@ -65,26 +66,103 @@ def show_time_series_forecast(data, indicator_name):
         if len(ts_data) == 0:
             st.warning(f"No data available for {indicator_name}")
             return
-        st.markdown(generate_chart_insights(data, "time_series", [indicator_name]), unsafe_allow_html=True)
-        if len(ts_data) < 5:
-            show_linear_projection(data, indicator_name)
+        
+        last_historical_year = ts_data.index.max()
+        if last_historical_year < datetime.now().year - 2:
+            st.info(f"Data current through {last_historical_year} (projecting {datetime.now().year - last_historical_year} years forward)")
+        
+        forecast_years = list(range(last_historical_year + 1, last_historical_year + 6))
+        all_years = sorted(list(ts_data.index) + forecast_years)
+        
+        if len(ts_data) < 2:
+            st.warning("Not enough data for forecasting")
             return
-        with st.spinner("Training forecasting model..."):
+        
+        with st.spinner("Generating forecast..."):
             try:
                 model = ARIMA(ts_data, order=(1, 1, 1)).fit()
-                forecast = model.forecast(steps=5)
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(x=ts_data.index, y=ts_data, name='Historical', line=dict(width=3, color='#1f77b4')))
-                fig.add_trace(go.Scatter(x=forecast.index, y=forecast, name='Forecast', line=dict(dash='dot', color='red', width=3)))
-                fig.update_layout(title=f"5-Year Forecast: {indicator_name}", template="plotly_dark", font=dict(color="white"), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-                st.plotly_chart(fig, use_container_width=True)
-                if len(ts_data) > 0:
-                    forecast_change = ((forecast.iloc[-1] - ts_data.iloc[-1]) / ts_data.iloc[-1]) * 100
-                    st.markdown(f"""<div class='insight-card'><b>Forecast Insight</b>: Predicted <b>{'increase' if forecast_change > 0 else 'decrease'}</b> of <b>{abs(forecast_change):.1f}%</b> over the next 5 years.</div>""", unsafe_allow_html=True)
+                forecast = model.get_forecast(steps=5)
+                forecast_values = forecast.predicted_mean.values.tolist()
+                
+                if len(forecast_values) != 5:
+                    forecast_values = [float(ts_data.iloc[-1])] * 5
+                    
             except Exception:
-                show_linear_projection(data, indicator_name)
-    except Exception:
-        st.error("Error processing time series")
+                forecast_values = [float(ts_data.iloc[-1])] * 5
+            
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=ts_data.index.tolist(),
+                y=ts_data.values.tolist(),
+                name='Historical Data',
+                line=dict(width=4, color='#1f77b4'),
+                marker=dict(size=8)
+            ))
+            fig.add_trace(go.Scatter(
+                x=forecast_years,
+                y=forecast_values,
+                name='Forecast',
+                line=dict(width=4, color='red', dash='dot'),
+                marker=dict(size=8, symbol='diamond')
+            ))
+            
+            fig.update_layout(
+                title=f"{indicator_name} - Historical Trend & 5-Year Forecast",
+                xaxis_title="Year",
+                yaxis_title="Value",
+                template="plotly_dark",
+                font=dict(color="white", size=14),
+                xaxis=dict(
+                    tickmode='array',
+                    tickvals=all_years[::max(1, len(all_years)//10)],
+                    ticktext=[f"<b>{y}</b>" if y > last_historical_year else str(y) 
+                            for y in all_years[::max(1, len(all_years)//10)]],
+                    tickangle=0,
+                    tickfont=dict(size=12),
+                    showgrid=True,
+                    gridwidth=0.5,
+                    gridcolor='rgba(100,100,100,0.2)'
+                ),
+                yaxis=dict(
+                    gridcolor='rgba(100,100,100,0.2)',
+                    gridwidth=0.5
+                ),
+                hovermode="x unified",
+                height=600,
+                margin=dict(l=50, r=50, b=100, t=100),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1,
+                    font=dict(size=12)
+                )
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+            last_actual_value = float(ts_data.iloc[-1])
+            last_forecast_value = forecast_values[-1]
+            forecast_change = ((last_forecast_value - last_actual_value) / last_actual_value) * 100
+            
+            st.markdown(f"""
+            <div style='
+                background: rgba(30,30,30,0.8);
+                border-radius: 10px;
+                padding: 15px;
+                margin: 15px 0;
+                border-left: 4px solid #FF5722;
+                font-size: 14px;
+            '>
+                <b style='font-size:16px'>Forecast Summary ({forecast_years[0]}-{forecast_years[-1]})</b><br>
+                Predicted <b>{'increase' if forecast_change > 0 else 'decrease'}</b> of <b>{abs(forecast_change):.1f}%</b> from {last_historical_year}
+            </div>
+            """, unsafe_allow_html=True)
+            
+    except Exception as e:
+        st.error(f"Forecast error: {str(e)}")
+        show_linear_projection(data, indicator_name)
 
 def show_linear_projection(data, indicator_name):
     try:
@@ -93,17 +171,53 @@ def show_linear_projection(data, indicator_name):
             x = np.array(ts_data.index)
             y = ts_data.values
             coeffs = np.polyfit(x, y, 1)
-            future_years = np.array([x[-1] + 1, x[-1] + 5])
+            future_years = np.arange(x[-1] + 1, x[-1] + 6)
             projected = coeffs[0] * future_years + coeffs[1]
+            
             fig = go.Figure()
-            fig.add_trace(go.Scatter(x=x, y=y, name='Historical'))
-            fig.add_trace(go.Scatter(x=future_years, y=projected, name='Linear Projection', line=dict(dash='dot')))
-            fig.update_layout(template="plotly_dark", font=dict(color="white"))
+            fig.add_trace(go.Scatter(
+                x=x,
+                y=y,
+                name='Historical',
+                line=dict(width=4, color='#1f77b4'),
+                mode='lines+markers'
+            ))
+            fig.add_trace(go.Scatter(
+                x=future_years,
+                y=projected,
+                name='Projection',
+                line=dict(width=4, color='red', dash='dot'),
+                mode='lines+markers'
+            ))
+            
+            fig.update_layout(
+                title=f"{indicator_name} - 5 Year Projection",
+                xaxis_title="Year",
+                yaxis_title="Value",
+                template="plotly_dark",
+                font=dict(color="white", size=14),
+                xaxis=dict(
+                    tickmode='array',
+                    tickvals=np.concatenate([x, future_years])[::max(1, len(x)//5)],
+                    tickangle=45,
+                    showgrid=True
+                ),
+                height=600,
+                margin=dict(l=50, r=50, b=100, t=100)
+            )
+            
             st.plotly_chart(fig, use_container_width=True)
+
             proj_change = ((projected[-1] - y[-1]) / y[-1]) * 100
-            st.markdown(f"""<div class='insight-card'><b>Linear Projection</b>: Expecting <b>{'increase' if proj_change > 0 else 'decrease'}</b> of <b>{abs(proj_change):.1f}%</b> in 5 years.</div>""", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div style='background:rgba(30,30,30,0.8);border-radius:10px;padding:15px;margin:10px 0;border-left:4px solid #FFA500'>
+            <b>Projection Summary</b><br>
+            Expected <b>{'increase' if proj_change > 0 else 'decrease'}</b> of <b>{abs(proj_change):.1f}%</b> by {int(future_years[-1])}
+            </div>
+            """, unsafe_allow_html=True)
+            
     except Exception:
-        st.error("Could not generate linear projection")
+        st.error("Error generating projection")
 
 def show_indicator_correlation(data, indicators):
     try:
@@ -137,7 +251,7 @@ def show_value_distribution(data, indicator_name):
             st.plotly_chart(fig2, use_container_width=True)
     except Exception:
         st.error("Could not show distribution")
-        
+
 def show_comparative_section(health_data):
     initialize_visualization()
     st.header("Comparative Insights")
