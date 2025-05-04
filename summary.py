@@ -3,16 +3,23 @@ from dashboard import background_images
 
 def show_summary():
     st.markdown(f"""
-    <style>
-    .stApp {{
-        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('{background_images["Executive Summary"]}');
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
+        <style>
+        .stApp {{
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('{background_images["Executive Summary"]}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+        .block-container {{
+            background-color: rgba(0, 0, 0, 0);
+        }}
+        h1, h2, h3, h4, h5, h6, p, li, div, .stMarkdown, .stText {{
+            color: white !important;
+        }}
+        </style>
+        """, unsafe_allow_html=True)
+    
     st.title("Sri Lanka Health Executive Summary")
     
     st.markdown("""

@@ -8,7 +8,7 @@ from sidebar import SECTION_BACKGROUNDS, set_section_background
 background_images = {
     "About": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/About.jpg",
     "Overview": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Overview.jpg",
-    "Comparative Insights": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Trends%20Overtime.JPG",
+    "Comparative Insights": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Comparative%20Insights.jpg",
     "Executive Summary": "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/Key%20Indicator%20Highlights.jpg",
     **SECTION_BACKGROUNDS
 }
@@ -16,54 +16,64 @@ background_images = {
 def apply_custom_styling():
     st.markdown("""
     <style>
-        .metric-card {
-            background-color: rgba(30, 30, 30, 0.8);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .metric-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.4);
-        }
-        .metric-card h4 {
-            color: #e0e0e0;
-            font-size: 16px;
-            margin-bottom: 10px;
-            font-weight: 500;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 8px;
-        }
-        .indicator-value {
-            font-size: 28px;
-            font-weight: bold;
-            color: #ffffff;
-            margin: 10px 0;
-        }
-        .year-label {
-            font-size: 14px;
-            color: #aaaaaa;
-            font-style: italic;
-        }
-        .section-divider {
-            margin: 40px 0;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-        .section-header {
-            background-color: rgba(0,0,0,0.4);
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border-left: 4px solid #2986cc;
-        }
+    .main {
+        background-color: transparent;
+    }
     </style>
     """, unsafe_allow_html=True)
 
 def initialize_page(category):
-    set_section_background(category)
-    st.markdown(f"<h1 class='section-header'>{category}</h1>", unsafe_allow_html=True)
+    if category in background_images:
+        background_url = background_images[category]
+        st.markdown(f"""
+        <style>
+        .stApp {{
+            background-image: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url({background_url});
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: white;
+        }}
+        .stMarkdown, p, h1, h2, h3, h4, h5, h6, ul, ol, li, div, span {{
+            color: white !important;
+        }}
+        .st-emotion-cache-nahz7x {{
+            color: white;
+        }}
+        th, td {{
+            color: white !important;
+        }}
+        .st-emotion-cache-j7qwjs p {{
+            color: white !important;
+        }}
+        </style>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <style>
+        .stApp {
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+        }
+        .stMarkdown, p, h1, h2, h3, h4, h5, h6, ul, ol, li, div, span {
+            color: white !important;
+        }
+        .st-emotion-cache-nahz7x {
+            color: white;
+        }
+        th, td {
+            color: white !important;
+        }
+        .st-emotion-cache-j7qwjs p {
+            color: white !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    
+    st.markdown(f"""
+    <h1 style='text-align: center; color: white;'>{category}</h1>
+    """, unsafe_allow_html=True)
 
 def format_value(value, is_percentage=False):
     if pd.isna(value):
@@ -75,17 +85,8 @@ def format_value(value, is_percentage=False):
     return f"{value:,.2f}"
 
 def show_overview(health_data):
-    st.markdown(f"""
-    <style>
-    .stApp {{
-        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('{background_images["Overview"]}');
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
+    # Ensure we're using the right background with proper overlay
+    initialize_page("Overview")
     
     st.title("Sri Lanka Health Dashboard Overview")
     
@@ -105,7 +106,9 @@ def show_overview(health_data):
     - Shifts in mortality patterns
     """)
     
-    st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+    st.markdown("""
+    <hr style="height:2px;border:none;color:#cccccc;background-color:#cccccc;margin-bottom:30px;margin-top:30px;" />
+    """, unsafe_allow_html=True)
     
     latest_year = health_data['Year'].max()
     year_range = f"{health_data['Year'].min()} to {health_data['Year'].max()}"
@@ -119,7 +122,9 @@ def show_overview(health_data):
     with cols[2]:
         st.metric(f"{latest_year} Data Coverage", f"{coverage_pct:.1f}%")
     
-    st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+    st.markdown("""
+    <hr style="height:2px;border:none;color:#cccccc;background-color:#cccccc;margin-bottom:30px;margin-top:30px;" />
+    """, unsafe_allow_html=True)
     st.subheader("Data Composition")
     
     category_counts = health_data.groupby('Category').size().reset_index(name='Count')
@@ -132,8 +137,8 @@ def show_overview(health_data):
     )
     fig.update_traces(textposition='inside', textinfo='percent+label')
     fig.update_layout(
-        plot_bgcolor='rgba(0,0,0,0.3)',
-        paper_bgcolor='rgba(0,0,0,0.3)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
         margin=dict(t=40, b=40, l=20, r=20),
         font=dict(color='white'),
         legend=dict(
@@ -147,7 +152,10 @@ def show_overview(health_data):
     )
     st.plotly_chart(fig, use_container_width=True)
     
-    st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+    st.markdown("""
+    <hr style="height:2px;border:none;color:#cccccc;background-color:#cccccc;margin-bottom:30px;margin-top:30px;" />
+    """, unsafe_allow_html=True)
+
     st.header("Performance Trends")
     
     health_data['Value'] = pd.to_numeric(health_data['Value'], errors='coerce')
@@ -162,7 +170,10 @@ def show_overview(health_data):
         complete_series = health_data.groupby('Indicator Name')['Year'].nunique().max()
         st.metric("Most Complete Series", f"{complete_series} years")
     
-    st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
+    st.markdown("""
+    <hr style="height:2px;border:none;color:#cccccc;background-color:#cccccc;margin-bottom:30px;margin-top:30px;" />
+    """, unsafe_allow_html=True)
+
     st.header("Animated Category Trends (1960-2023)")
     tabs = st.tabs(list(categories.keys()))
     
@@ -195,7 +206,7 @@ def show_overview(health_data):
                         marker=dict(size=10),
                         line=dict(width=4),
                         marker_color=colors[i % len(colors)],
-                        hovertemplate=f"{indicator_name}<br>Year: %{{x}}<br>Value: %{{y}}<extra></extra>",
+                        hovertemplate=f"{indicator_name}<br>Year: %{{x}}<br>Value: %{{y}}",
                         customdata=[indicator_name] * len(indicator_data)
                     ))
                 
@@ -203,6 +214,8 @@ def show_overview(health_data):
                     height=1100,
                     width=1200,
                     template='plotly_dark',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
                     margin=dict(l=100, r=100, t=100, b=350),
                     xaxis=dict(
                         title='Year',
@@ -266,7 +279,7 @@ def show_overview(health_data):
                 frames = []
                 for year in range(1960, 2024):
                     frame_data = []
-                    for _, row in available_indicators.iterrows():
+                    for i, row in available_indicators.iterrows():
                         year_data = category_data[
                             (category_data['Year'] <= year) & 
                             (category_data['Indicator Name'] == row['Indicator Name'])
@@ -278,12 +291,13 @@ def show_overview(health_data):
                             )
                         )
                     frames.append(go.Frame(data=frame_data, name=str(year)))
-
                 fig.frames = frames
                 
                 st.plotly_chart(fig, use_container_width=True)
                 
-                st.markdown("<div style='margin-top:100px;'></div>", unsafe_allow_html=True)
+                st.markdown("""
+                <hr style="height:2px;border:none;color:#cccccc;background-color:#cccccc;margin-bottom:30px;margin-top:30px;" />
+                """, unsafe_allow_html=True)
                 
                 with st.expander("Indicator Code Reference", expanded=False):
                     mapping_table = available_indicators[['Indicator_Code', 'Indicator Name']] \
@@ -315,30 +329,32 @@ def show_category_analysis(data, category_name):
     initialize_page(category_name)
     
     category_intros = {
-        "Mortality Rates": "Analyzing mortality patterns across age groups and causes of death.",
-        "Health Expenditure": "Tracking healthcare financing and economic impacts.",
-        "Maternal and Child Health": "Monitoring reproductive health and child development.",
-        "Infectious Diseases": "Surveillance of communicable disease trends.",
-        "Healthcare Infrastructure": "Assessing health system resources.",
-        "Water and Sanitation": "Evaluating access to clean water.",
-        "Non-communicable Diseases": "Tracking chronic disease burden.",
-        "Nutrition": "Analyzing food security and malnutrition.",
-        "Demographic Indicators": "Examining population structure.",
-        "Reproductive Health": "Monitoring family planning.",
-        "Civil Registration": "Assessing vital event systems.",
-        "Injury and External Causes": "Analyzing accidents and violence."
+        "Mortality Rates Analysis": "Analyzing mortality patterns across age groups and causes of death.",
+        "Health Expenditure Analysis": "Tracking healthcare financing and economic impacts.",
+        "Maternal and Child Health Analysis": "Monitoring reproductive health and child development.",
+        "Infectious Diseases Analysis": "Surveillance of communicable disease trends.",
+        "Healthcare Infrastructure and Services Analysis": "Assessing health system resources.",
+        "Water, Sanitation and Hygiene Analysis": "Evaluating access to clean water.",
+        "Non-communicable Diseases and Risk Factors Analysis": "Tracking chronic disease burden.",
+        "Nutrition and Food Security Analysis": "Analyzing food security and malnutrition.",
+        "Demographic Indicators Analysis": "Examining population structure.",
+        "Reproductive Health Analysis": "Monitoring family planning.",
+        "Civil Registration Analysis": "Assessing vital event systems.",
+        "Injury and External Causes Analysis": "Analyzing accidents and violence."
     }
-
+    
     if data.empty:
         st.warning(f"No data available for {category_name}")
         return
     
-    if not pd.api.types.is_numeric_dtype(data['Value']):
-        data['Value'] = pd.to_numeric(data['Value'], errors='coerce')
-
-    st.markdown(f"<h2>{category_name}</h2>", unsafe_allow_html=True)
-    st.write(category_intros.get(category_name.replace(" Analysis", ""), ""))
+    # Convert data to numeric if not already
+    data['Value'] = pd.to_numeric(data['Value'], errors='coerce')
     
+    # Header and introduction
+    st.title(category_name)
+    st.write(category_intros.get(category_name, ""))
+    
+    # Key metrics
     cols = st.columns(3)
     with cols[0]:
         st.metric("Indicators Available", len(data['Indicator Name'].unique()))
@@ -346,11 +362,62 @@ def show_category_analysis(data, category_name):
         st.metric("Years Covered", f"{int(data['Year'].min())}-{int(data['Year'].max())}")
     with cols[2]:
         latest_year = data['Year'].max()
-        latest_coverage = len(data[data['Year']==latest_year])/len(data)*100
+        latest_coverage = len(data[data['Year']==latest_year])/len(data['Indicator Name'].unique())*100
         st.metric(f"{latest_year} Coverage", f"{latest_coverage:.1f}%")
-
-    st.markdown("---")
+    
+    st.markdown("""
+    
+    """, unsafe_allow_html=True)
+    
+    # Animated chart section
     st.header("Trend Analysis")
+    show_animated_trend_chart(data, category_name)
+    
+    st.markdown("""
+    
+    """, unsafe_allow_html=True)
+    
+    # Latest values section
+    st.header("Latest Values")
+    latest_year = data['Year'].max()
+    latest_data = data[data['Year'] == latest_year]
+    
+    if not latest_data.empty:
+        cols = st.columns(3)
+        for idx, row in latest_data.iterrows():
+            with cols[idx % 3]:
+                st.markdown(
+                    f"""
+                    
+                        
+{row['Indicator Name']}
+                        
+{format_value(row['Value'])}
+                        
+Year: {latest_year}
+                    
+                    """,
+                    unsafe_allow_html=True
+                )
+    
+    st.markdown("""
+    
+    """, unsafe_allow_html=True)
+    
+    # Complete dataset
+    st.header("Complete Dataset")
+    st.dataframe(
+        data[['Indicator_Code', 'Indicator Name', 'Year', 'Value', 'Category']]
+        .sort_values(['Indicator Name', 'Year'])
+        .reset_index(drop=True),
+        use_container_width=True,
+        height=500
+    )
+
+def show_animated_trend_chart(data, category_name):
+    if data.empty:
+        st.warning(f"No data available for {category_name}")
+        return
     
     indicators = categories.get(category_name.replace(" Analysis", ""), [])
     if not indicators:
@@ -362,164 +429,188 @@ def show_category_analysis(data, category_name):
         (data['Value'].notna())
     ].copy()
     
-    if not category_data.empty:
-        available_indicators = category_data[['Indicator Name', 'Indicator_Code']].drop_duplicates()
+    if category_data.empty:
+        st.warning("No valid data points for visualization")
+        return
+    
+    available_indicators = category_data[['Indicator Name', 'Indicator_Code']].drop_duplicates()
+    
+    fig = go.Figure()
+    
+    colors = px.colors.qualitative.Plotly
+    for i, row in available_indicators.iterrows():
+        indicator_name = row['Indicator Name']
+        indicator_code = row['Indicator_Code']
+        indicator_data = category_data[category_data['Indicator Name'] == indicator_name]
         
-        # Create static line chart
-        fig = px.line(
-            category_data,
-            x="Year",
-            y="Value",
-            color="Indicator_Code",
-            line_group="Indicator Name",
-            hover_name="Indicator Name",
-            labels={"Value": "Indicator Value", "Year": "Year"},
-            title=f"{category_name} Trends Over Time",
-            template="plotly_dark",
-            height=600
+        fig.add_trace(go.Scatter(
+            x=indicator_data['Year'],
+            y=indicator_data['Value'],
+            name=indicator_code,
+            mode='lines+markers',
+            marker=dict(size=10),
+            line=dict(width=4),
+            marker_color=colors[i % len(colors)],
+            hovertemplate=f"{indicator_name}<br>Year: %{{x}}<br>Value: %{{y}}",
+            customdata=[indicator_name] * len(indicator_data))
         )
-        
-        # Update layout for better readability
-        fig.update_layout(
-            margin=dict(l=100, r=100, t=100, b=100),
-            xaxis=dict(
-                title='Year',
-                showline=True,
-                showgrid=False,
-                tickfont=dict(size=14),
-                title_font=dict(size=16),
-                ticklen=10,
-                tickwidth=2,
-                ticks='outside'
-            ),
-            yaxis=dict(
-                title='Value',
-                showgrid=True,
-                gridcolor='rgba(100, 100, 100, 0.3)',
-                tickfont=dict(size=14),
-                title_font=dict(size=16)
-            ),
-            legend=dict(
-                title='Indicator Codes',
-                orientation="h",
-                yanchor="bottom",
-                y=-0.3,
-                xanchor="center",
-                x=0.5,
-                font=dict(size=10),
-                bgcolor='rgba(0,0,0,0.5)'
-            ),
-            hovermode='x unified'
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
-        
-        st.markdown("---")
-        st.subheader("Indicator Code Reference")
+    
+    years = sorted(category_data['Year'].unique())
+    frames = [go.Frame(
+        name=str(year),
+        data=[
+            go.Scatter(
+                x=category_data[
+                    (category_data['Indicator Name'] == row['Indicator Name']) &
+                    (category_data['Year'] <= year)
+                ]['Year'],
+                y=category_data[
+                    (category_data['Indicator Name'] == row['Indicator Name']) &
+                    (category_data['Year'] <= year)
+                ]['Value']
+            ) for i, row in available_indicators.iterrows()
+        ]
+    ) for year in years]
+    
+    fig.frames = frames
+    
+    fig.update_layout(
+        height=800,
+        template='plotly_dark',
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=100, r=100, t=100, b=100),
+        xaxis=dict(
+            title='Year',
+            showline=True,
+            showgrid=False,
+            range=[years[0]-1, years[-1]+1],
+            tickmode='linear',
+            tick0=years[0],
+            dtick=5,
+            tickfont=dict(size=14),
+            title_font=dict(size=16),
+            ticklen=10,
+            tickwidth=2,
+            ticks='outside'
+        ),
+        yaxis=dict(
+            title='Value',
+            showgrid=True,
+            gridcolor='rgba(100, 100, 100, 0.3)',
+            tickfont=dict(size=14),
+            title_font=dict(size=16)
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.5,  
+            xanchor="center",
+            x=0.5,
+            font=dict(size=12),
+            itemwidth=40,
+            bgcolor='rgba(0,0,0,0.5)'
+        ),
+        updatemenus=[dict(
+            type="buttons",
+            showactive=True,
+            buttons=[
+                dict(
+                    label="▶️ Play",
+                    method="animate",
+                    args=[None, {
+                        "frame": {"duration": 500, "redraw": True},
+                        "fromcurrent": True,
+                        "transition": {"duration": 300}
+                    }]
+                ),
+                dict(
+                    label="⏸ Pause",
+                    method="animate",
+                    args=[[None], {
+                        "frame": {"duration": 0, "redraw": False},
+                        "mode": "immediate",
+                        "transition": {"duration": 0}
+                    }]
+                )
+            ],
+            x=0.1,
+            xanchor="right",
+            y=-0.3,
+            yanchor="top",
+            pad=dict(t=20, b=20),
+            bgcolor='rgba(0,0,0,0.7)'
+        )],
+        sliders=[dict(
+            active=0,
+            currentvalue={"prefix": "Year: ", "font": {"size": 14}},
+            pad=dict(t=50, b=20),
+            steps=[
+                dict(
+                    args=[[str(year)], dict(mode="immediate", frame={"duration": 0})],
+                    label=str(year),
+                    method="animate"
+                ) for year in years
+            ]
+        )]
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    with st.expander("Indicator Code Reference", expanded=False):
         mapping_table = available_indicators[['Indicator_Code', 'Indicator Name']] \
-            .rename(columns={'Indicator_Code': 'Code'}) \
-            .sort_values('Code') \
+            .rename(columns={'Indicator_Code': 'Indicator Code'}) \
+            .sort_values('Indicator Code') \
             .reset_index(drop=True)
+        
         st.dataframe(
-            mapping_table,
+            mapping_table.style.apply(
+                lambda x: ['background: #222222' if i%2==0 else 'background: #444444' 
+                         for i in range(len(x))],
+                axis=1
+            ),
             use_container_width=True,
             height=min(400, 35 * len(mapping_table) + 38)
         )
 
-        st.markdown("---")
-        st.header("Yearly Distribution")
-        all_years = sorted(data['Year'].unique())
-        selected_years = st.multiselect(
-            "Select years to display:",
-            options=all_years,
-            default=[all_years[0], all_years[len(all_years)//2], all_years[-1]],
-            key=f"year_select_{category_name}"
-        )
-        
-        if selected_years:
-            for year in selected_years:
-                year_data = data[data['Year'] == year]
-                if not year_data.empty:
-                    st.markdown(f"### {year} Distribution")
-                    fig = px.pie(
-                        year_data,
-                        names='Indicator_Code',
-                        values='Value',
-                        hole=0.4,
-                        color_discrete_sequence=px.colors.qualitative.Pastel
-                    )
-                    fig.update_traces(
-                        hovertemplate="<b>%{label}</b><br>" + 
-                                    year_data.set_index('Indicator_Code')['Indicator Name'].to_dict().get("%{label}", "") + 
-                                    "<br>Value: %{value}<br>Percentage: %{percent}",
-                        textposition='inside',
-                        textinfo='percent+label'
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-
-        st.markdown("---")
-        st.header("Latest Values")
-        latest_year = data['Year'].max()
-        latest_data = data[data['Year'] == latest_year]
-        if not latest_data.empty:
-            cols = st.columns(3)
-            for idx, row in latest_data.iterrows():
-                with cols[idx % 3]:
-                    st.markdown(
-                        f"""
-                        <div class="metric-card">
-                            <h4>{row['Indicator Name']}</h4>
-                            <p class="indicator-value">{format_value(row['Value'])}</p>
-                            <p class="year-label">Year: {latest_year}</p>
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-
-        st.markdown("---")
-        st.header("Complete Dataset")
-        st.dataframe(
-            data[['Indicator_Code', 'Indicator Name', 'Year', 'Value', 'Category']]
-            .sort_values(['Indicator Name', 'Year']),
-            use_container_width=True,
-            height=500
-        )
-
 def show_demographic_insights(data):
     show_category_analysis(data, "Demographic Indicators Analysis")
+
 def show_health_expenditure_insights(data):
     show_category_analysis(data, "Health Expenditure Analysis")
+
 def show_mortality_trends(data):
     show_category_analysis(data, "Mortality Rates Analysis")
+
 def show_maternal_child_health(data):
     show_category_analysis(data, "Maternal and Child Health Analysis")
+
 def show_infectious_diseases(data):
     show_category_analysis(data, "Infectious Diseases Analysis")
+
 def show_healthcare_infrastructure(data):
     show_category_analysis(data, "Healthcare Infrastructure and Services Analysis")
+
 def show_water_sanitation(data):
     show_category_analysis(data, "Water, Sanitation and Hygiene Analysis")
+
 def show_non_communicable_diseases(data):
     show_category_analysis(data, "Non-communicable Diseases and Risk Factors Analysis")
+
 def show_nutrition(data):
     show_category_analysis(data, "Nutrition and Food Security Analysis")
+
 def show_reproductive_health(data):
     show_category_analysis(data, "Reproductive Health Analysis")
+
 def show_civil_registration(data):
     show_category_analysis(data, "Civil Registration Analysis")
+
 def show_injury_causes(data):
     show_category_analysis(data, "Injury and External Causes Analysis")
+
 def show_dashboard(data):
     st.markdown(f"""
-    <style>
-    .stApp {{
-        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
-                   url('{background_images.get("Comparative Insights", "")}');
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-    }}
-    </style>
+    
     """, unsafe_allow_html=True)
     st.markdown("---")

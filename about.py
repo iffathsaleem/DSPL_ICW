@@ -1,10 +1,8 @@
 import streamlit as st
 from visualizations import show_interactive_map
-
 def show_about():
     bg_image_url = "https://raw.githubusercontent.com/iffathsaleem/DSPL_ICW/main/Images/About.jpg"
     
-    # Set background and text styles
     st.markdown(
         f"""
         <style>
@@ -18,7 +16,6 @@ def show_about():
         .block-container {{
             background-color: rgba(0, 0, 0, 0);
         }}
-        /* Ensure all text is white */
         h1, h2, h3, h4, h5, h6, p, li, div {{
             color: white !important;
         }}
@@ -27,14 +24,11 @@ def show_about():
         unsafe_allow_html=True
     )
  
-    # About Section
     with st.container():
         st.title("About This Dashboard")
         st.markdown("""
         ## Sri Lanka Health Insights Dashboard
-
         This interactive dashboard provides comprehensive visualization of national health indicators from 1960 to 2023.
-
         ### Key Focus Areas:
         - Mortality Rates  
         - Maternal and Child Health  
@@ -48,17 +42,13 @@ def show_about():
         - Reproductive Health  
         - Civil Registration  
         - Injury and External Causes  
-
         ### Main Features:
         - Interactive charts and visualizations  
         - Advanced filtering by category and keywords  
         - Time-series analysis across decades  
         - Key performance indicators tracking  
         - Comparative insights across indicators  
-
         **Data Sources:** World Bank, Sri Lanka Health Ministry, and WHO datasets.
         """)
-
-    # Map Section
     with st.container():
         show_interactive_map()
