@@ -405,14 +405,14 @@ Year: {latest_year}
     """, unsafe_allow_html=True)
     
     # Complete dataset
-    st.header("Complete Dataset")
+    st.header("Dataset Relevant To Catergory")
     st.dataframe(
-        data[['Indicator_Code', 'Indicator Name', 'Year', 'Value', 'Category']]
-        .sort_values(['Indicator Name', 'Year'])
-        .reset_index(drop=True),
-        use_container_width=True,
-        height=500
-    )
+    data[data['Category'] == category_name.replace(" Analysis", "")][['Indicator_Code', 'Indicator Name', 'Year', 'Value', 'Category']]
+    .sort_values(['Indicator Name', 'Year'])
+    .reset_index(drop=True),
+    use_container_width=True,
+    height=500
+)
 
 def show_animated_trend_chart(data, category_name):
     if data.empty:
