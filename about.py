@@ -48,7 +48,7 @@ def show_about():
         - Time-series analysis across decades  
         - Key performance indicators tracking  
         - Comparative insights across indicators  
-        **Data Sources:** World Bank, Sri Lanka Health Ministry, and WHO datasets.
+        **Data Sources:** World Bank datasets.
         """)
     with st.container():
         show_interactive_map()
