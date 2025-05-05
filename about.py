@@ -63,7 +63,7 @@ def show_about():
         - Key performance indicators tracking  
         - Comparative insights across indicators  
         
-        **Data Sources:** World Bank datasets, Sri Lanka Ministry of Health, and WHO estimates.
+        **Data Sources:** World Bank datasets
         """)
     
     with st.container():
