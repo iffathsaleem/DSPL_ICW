@@ -36,6 +36,27 @@ def apply_filters(data, filters):
     
     return filtered.sort_values("Year")
 
+def footer():
+    st.markdown("""
+    <style>
+    .footer {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        background-color: rgba(0,0,0,0.7);
+        color: white;
+        text-align: center;
+        padding: 10px;
+        font-size: 14px;
+        z-index: 1000;
+    }
+    </style>
+    <div class="footer">
+        Developed for Individual Coursework for Data Science Project Lifecycle Module | University of Westminster
+    </div>
+    """, unsafe_allow_html=True)
+
 def main():
     st.set_page_config(
         layout="wide",
@@ -44,7 +65,6 @@ def main():
     )
     
     health_data = load_data()
-    
     page, filters = show_sidebar(health_data)
     
     if any(page.startswith(cat) for cat in categories.keys()):
@@ -65,6 +85,8 @@ def main():
         show_category_analysis(health_data, category_name)
     else:
         st.error(f"Page '{page}' not configured")
+    
+    footer()
 
 if __name__ == "__main__":
     main()
